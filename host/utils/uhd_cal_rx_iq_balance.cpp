@@ -268,7 +268,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[])
 
     //stop the transmitter
     threads.interrupt_all();
-    boost::this_thread::sleep(boost::posix_time::milliseconds(500));    //wait for threads to finish
+    boost::this_thread::sleep(boost::posix_time::milliseconds(2500));    //wait for threads to finish
     threads.join_all();
 
     store_results(results, "RX", "rx", "iq", serial);
