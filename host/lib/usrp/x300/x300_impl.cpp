@@ -395,7 +395,7 @@ static void x300_load_fw(wb_iface::sptr fw_reg_ctrl, const std::string &file_nam
     UHD_MSG(status) << " done!" << std::endl;
 }
 
-x300_impl::x300_impl(const uhd::device_addr_t &dev_addr) 
+x300_impl::x300_impl(const uhd::device_addr_t &dev_addr)
     : device3_impl()
     , _sid_framer(0)
 {
@@ -1471,7 +1471,7 @@ void x300_impl::sync_times(mboard_members_t &mb, const uhd::time_spec_t& t)
 
 bool x300_impl::wait_for_clk_locked(mboard_members_t& mb, uint32_t which, double timeout)
 {
-    boost::system_time timeout_time = boost::get_system_time() + boost::posix_time::milliseconds(timeout * 1000.0);
+    boost::system_time timeout_time = boost::get_system_time() + boost::posix_time::microseconds(int(timeout * 1e6));
     do {
         if (mb.fw_regmap->clock_status_reg.read(which)==1)
             return true;

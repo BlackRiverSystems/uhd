@@ -31,7 +31,7 @@
 
 namespace po = boost::program_options;
 
-const double CLOCK_TIMEOUT = 1000;  // 1000mS timeout for external clock locking
+const int CLOCK_TIMEOUT = 1000;  // 1000mS timeout for external clock locking
 const double INIT_DELAY    = 0.05;  // 50mS initial delay before transmit
 //typedef boost::atomic<bool>   atomic_bool;
 // We'll fake atomic bools for now, for more backward compat.
@@ -471,7 +471,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
     const long usecs = long((duration - secs)*1e6);
     boost::this_thread::sleep(boost::posix_time::seconds(secs)
             + boost::posix_time::microseconds(usecs)
-            + boost::posix_time::milliseconds( (rx_channel_nums.size() <= 1 and tx_channel_nums.size() <= 1) ? 0 : (INIT_DELAY * 1000))
+            + boost::posix_time::milliseconds( (rx_channel_nums.size() <= 1 and tx_channel_nums.size() <= 1) ? 0 : int(INIT_DELAY * 1000))
     );
 
     //interrupt and join the threads
