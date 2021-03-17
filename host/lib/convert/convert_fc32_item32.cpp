@@ -91,16 +91,16 @@ struct convert_star_1_to_fc32_item32_1 : public converter
 };
 
 #define __make_registrations(itype, otype, fcn, type, conv) \
-static converter::sptr make_convert_ ## itype ## _1_ ## otype ## boost::placeholders::_1(void) \
+static converter::sptr make_convert_ ## itype ## _1_ ## otype ## _1(void) \
 { \
     return converter::sptr(new fcn<type, conv>()); \
 } \
-UHD_STATIC_BLOCK(register_convert_ ## itype ## _1_ ## otype ## boost::placeholders::_1) \
+UHD_STATIC_BLOCK(register_convert_ ## itype ## _1_ ## otype ## _1) \
 { \
     uhd::convert::id_type id; \
     id.num_inputs = 1; id.num_outputs = 1;  \
     id.input_format = #itype; id.output_format = #otype; \
-    uhd::convert::register_converter(id, &make_convert_ ## itype ## _1_ ## otype ## boost::placeholders::_1, PRIORITY_GENERAL); \
+    uhd::convert::register_converter(id, &make_convert_ ## itype ## _1_ ## otype ## _1, PRIORITY_GENERAL); \
 }
 
 __make_registrations(fc32_item32_le, fc32, convert_fc32_item32_1_to_star_1, float, uhd::wtohx)
