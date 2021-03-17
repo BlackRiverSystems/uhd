@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include "../lib/transport/super_send_packet_handler.hpp"
 #include <boost/shared_array.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <complex>
 #include <vector>
 #include <list>
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(test_sph_send_one_channel_one_packet_mode){
     handler.set_vrt_packer(&uhd::transport::vrt::if_hdr_pack_be);
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
-    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_send_xport_class::get_send_buff, &dummy_send_xport, _1));
+    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_send_xport_class::get_send_buff, &dummy_send_xport, boost::placeholders::_1));
     handler.set_converter(id);
     handler.set_max_samples_per_packet(20);
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(test_sph_send_one_channel_full_buffer_mode){
     handler.set_vrt_packer(&uhd::transport::vrt::if_hdr_pack_be);
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
-    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_send_xport_class::get_send_buff, &dummy_send_xport, _1));
+    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_send_xport_class::get_send_buff, &dummy_send_xport, boost::placeholders::_1));
     handler.set_converter(id);
     handler.set_max_samples_per_packet(20);
 

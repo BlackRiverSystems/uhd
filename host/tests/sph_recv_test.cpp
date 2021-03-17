@@ -18,7 +18,7 @@
 #include <boost/test/unit_test.hpp>
 #include "../lib/transport/super_recv_packet_handler.hpp"
 #include <boost/shared_array.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <complex>
 #include <vector>
 #include <list>
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_one_channel_normal){
     handler.set_vrt_unpacker(&uhd::transport::vrt::if_hdr_unpack_be);
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
-    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, _1));
+    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, boost::placeholders::_1));
     handler.set_converter(id);
 
     //check the received packets
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_one_channel_sequence_error){
     handler.set_vrt_unpacker(&uhd::transport::vrt::if_hdr_unpack_be);
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
-    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, _1));
+    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, boost::placeholders::_1));
     handler.set_converter(id);
 
     //check the received packets
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_one_channel_inline_message){
     handler.set_vrt_unpacker(&uhd::transport::vrt::if_hdr_unpack_be);
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
-    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, _1));
+    handler.set_xport_chan_get_buff(0, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xport, boost::placeholders::_1));
     handler.set_converter(id);
 
     //create an overflow handler
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_multi_channel_normal){
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
     for (size_t ch = 0; ch < NCHANNELS; ch++){
-        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], _1));
+        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], boost::placeholders::_1));
     }
     handler.set_converter(id);
 
@@ -500,7 +500,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_multi_channel_sequence_error){
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
     for (size_t ch = 0; ch < NCHANNELS; ch++){
-        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], _1));
+        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], boost::placeholders::_1));
     }
     handler.set_converter(id);
 
@@ -601,7 +601,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_multi_channel_time_error){
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
     for (size_t ch = 0; ch < NCHANNELS; ch++){
-        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], _1));
+        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], boost::placeholders::_1));
     }
     handler.set_converter(id);
 
@@ -696,7 +696,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_multi_channel_exception){
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
     for (size_t ch = 0; ch < NCHANNELS; ch++){
-        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], _1));
+        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], boost::placeholders::_1));
     }
     handler.set_converter(id);
 
@@ -762,7 +762,7 @@ BOOST_AUTO_TEST_CASE(test_sph_recv_multi_channel_fragment){
     handler.set_tick_rate(TICK_RATE);
     handler.set_samp_rate(SAMP_RATE);
     for (size_t ch = 0; ch < NCHANNELS; ch++){
-        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], _1));
+        handler.set_xport_chan_get_buff(ch, boost::bind(&dummy_recv_xport_class::get_recv_buff, &dummy_recv_xports[ch], boost::placeholders::_1));
     }
     handler.set_converter(id);
 

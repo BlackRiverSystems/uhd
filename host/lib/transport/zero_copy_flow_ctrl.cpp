@@ -25,7 +25,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 using namespace uhd;
 using namespace uhd::transport;

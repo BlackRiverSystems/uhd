@@ -964,12 +964,12 @@ tvrx2::tvrx2(ctor_args_t args) : rx_dboard_base(args){
         .set_publisher(boost::bind(&tvrx2::get_temp, this));
     BOOST_FOREACH(const std::string &name, tvrx2_gain_ranges.keys()){
         this->get_rx_subtree()->create<double>("gains/"+name+"/value")
-            .set_coercer(boost::bind(&tvrx2::set_gain, this, _1, name));
+            .set_coercer(boost::bind(&tvrx2::set_gain, this, boost::placeholders::_1, name));
         this->get_rx_subtree()->create<meta_range_t>("gains/"+name+"/range")
             .set(tvrx2_gain_ranges[name]);
     }
     this->get_rx_subtree()->create<double>("freq/value")
-        .set_coercer(boost::bind(&tvrx2::set_lo_freq, this, _1));
+        .set_coercer(boost::bind(&tvrx2::set_lo_freq, this, boost::placeholders::_1));
     this->get_rx_subtree()->create<meta_range_t>("freq/range")
         .set(tvrx2_freq_range);
     this->get_rx_subtree()->create<std::string>("antenna/value")
@@ -979,12 +979,12 @@ tvrx2::tvrx2(ctor_args_t args) : rx_dboard_base(args){
     this->get_rx_subtree()->create<std::string>("connection")
         .set(tvrx2_sd_name_to_conn[get_subdev_name()]);
     this->get_rx_subtree()->create<bool>("enabled")
-        .set_coercer(boost::bind(&tvrx2::set_enabled, this, _1))
+        .set_coercer(boost::bind(&tvrx2::set_enabled, this, boost::placeholders::_1))
         .set(_enabled);
     this->get_rx_subtree()->create<bool>("use_lo_offset")
         .set(false);
     this->get_rx_subtree()->create<double>("bandwidth/value")
-        .set_coercer(boost::bind(&tvrx2::set_bandwidth, this, _1))
+        .set_coercer(boost::bind(&tvrx2::set_bandwidth, this, boost::placeholders::_1))
         .set(_bandwidth);
     this->get_rx_subtree()->create<meta_range_t>("bandwidth/range")
         .set(tvrx2_bandwidth_range);
@@ -1239,7 +1239,7 @@ freq_range_t tvrx2::get_tda18272_rfcal_result_freq_range(uint32_t result)
     ;
 
     if (result < 11)
-        return result_to_cal_freq_ranges_map[result]; 
+        return result_to_cal_freq_ranges_map[result];
     else
         return freq_range_t(0.0, 0.0);
 }
@@ -1379,11 +1379,11 @@ void tvrx2::tvrx2_tda18272_tune_rf_filter(uint32_t uRF)
         "\tRF Filter Bypass = %d\n"
         "\tRF Filter Cap    = %d\n"
         "\tRF Filter Band   = %d\n"
-        "\tGain Taper       = %d\n") 
+        "\tGain Taper       = %d\n")
         % (get_subdev_name())
         % int(_tda18272hnm_regs.rf_filter_bypass)
         % int(_tda18272hnm_regs.rf_filter_cap)
-        % int(_tda18272hnm_regs.rf_filter_band) 
+        % int(_tda18272hnm_regs.rf_filter_band)
         % int(_tda18272hnm_regs.gain_taper)
         << std::endl;
 
@@ -1431,8 +1431,8 @@ void tvrx2::soft_calibration(void){
     send_reg(0x1B, 0x1B); //PSM_AGC1
     send_reg(0x0C, 0x0C); //AGC1_6_15dB
 
-    //set spread spectrum for clock 
-    //FIXME: NXP turns clock spread on and off 
+    //set spread spectrum for clock
+    //FIXME: NXP turns clock spread on and off
     //   based on where clock spurs would be relative to RF frequency
     //   we should do this also
     _tda18272hnm_regs.digital_clock = tda18272hnm_regs_t::DIGITAL_CLOCK_SPREAD_OFF;
@@ -1442,7 +1442,7 @@ void tvrx2::soft_calibration(void){
     else
         //_tda18272hnm_regs.xtout = tda18272hnm_regs_t::XTOUT_NO;
         _tda18272hnm_regs.xtout = tda18272hnm_regs_t::XTOUT_16MHZ;
-    
+
     send_reg(0x14, 0x14);
 
     _tda18272hnm_regs.set_reg(0x36, 0x0E); //sets clock mode
@@ -1486,7 +1486,7 @@ void tvrx2::test_rf_filter_robustness(void){
                 partial = 100 * (45 - 39.8225 * (1 + (0.31 * (cal_result < 64 ? cal_result : cal_result - 128)) / 1.0 / 100.0)) / 45.0;
 
             else if (name == "VHFLow_1")
-                partial = 100 * (152.1828 * (1 + (1.53 * (cal_result < 64 ? cal_result : cal_result - 128)) / 1.0 / 100.0) - (144.896 - 6)) / (144.896 - 6); 
+                partial = 100 * (152.1828 * (1 + (1.53 * (cal_result < 64 ? cal_result : cal_result - 128)) / 1.0 / 100.0) - (144.896 - 6)) / (144.896 - 6);
 
             else if (name == "VHFHigh_0")
                 partial = 100 * ((144.896 + 6) - 135.4063 * (1 + (0.27 * (cal_result < 64 ? cal_result : cal_result - 128)) / 1.0 / 100.0)) / (144.896 + 6);
@@ -1558,8 +1558,8 @@ void tvrx2::transition_0(void){
     send_reg(0x1B, 0x1B); //PSM_AGC1
     send_reg(0x0C, 0x0C); //AGC1_6_15dB
 
-    //set spread spectrum for clock 
-    //FIXME: NXP turns clock spread on and off 
+    //set spread spectrum for clock
+    //FIXME: NXP turns clock spread on and off
     //   based on where clock spurs would be relative to RF frequency
     //   we should do this also
     _tda18272hnm_regs.digital_clock = tda18272hnm_regs_t::DIGITAL_CLOCK_SPREAD_OFF;
@@ -1569,7 +1569,7 @@ void tvrx2::transition_0(void){
     else
         //_tda18272hnm_regs.xtout = tda18272hnm_regs_t::XTOUT_NO;
         _tda18272hnm_regs.xtout = tda18272hnm_regs_t::XTOUT_16MHZ;
-    
+
     send_reg(0x14, 0x14);
 
     _tda18272hnm_regs.set_reg(0x36, 0x0E); //sets clock mode
@@ -1623,23 +1623,23 @@ void tvrx2::transition_2(int rf_freq){
     _tda18272hnm_regs.sm = tda18272hnm_regs_t::SM_NORMAL;
     _tda18272hnm_regs.sm_lna = tda18272hnm_regs_t::SM_LNA_ON;
     _tda18272hnm_regs.sm_pll = tda18272hnm_regs_t::SM_PLL_ON;
-    
+
     send_reg(0x6, 0x6);
-    
+
     //Set Clock Mode
     _tda18272hnm_regs.set_reg(0x36, 0x00);
     send_reg(0x36, 0x36);
-    
+
     //Set desired RF Frequency
     set_scaled_rf_freq(rf_freq);
     send_reg(0x16, 0x18);
-    
+
     //Lock PLL and tune RF Filters
     _tda18272hnm_regs.set_reg(0x19, 0x41); //set MSM_byte_1 for RF Filters Tuning, PLL Locking
     _tda18272hnm_regs.set_reg(0x1A, 0x01); //set MSM_byte_2 for launching calibration
-    
+
     send_reg(0x19, 0x1A);
-    
+
     wait_irq();
 
     tvrx2_tda18272_tune_rf_filter(rf_freq);
@@ -1679,13 +1679,13 @@ void tvrx2::transition_4(int rf_freq){
     //Set desired RF Frequency
     set_scaled_rf_freq(rf_freq);
     send_reg(0x16, 0x18);
-    
+
     //Lock PLL and tune RF Filters
     _tda18272hnm_regs.set_reg(0x19, 0x41); //set MSM_byte_1 for RF Filters Tuning, PLL Locking
     _tda18272hnm_regs.set_reg(0x1A, 0x01); //set MSM_byte_2 for launching calibration
-    
+
     send_reg(0x19, 0x1A);
-    
+
     wait_irq();
 
     tvrx2_tda18272_tune_rf_filter(rf_freq);

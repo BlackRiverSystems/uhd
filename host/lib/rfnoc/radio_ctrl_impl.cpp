@@ -18,7 +18,7 @@
 #include "wb_iface_adapter.hpp"
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <uhd/convert.hpp>
 #include <uhd/utils/msg.hpp>
 #include <uhd/types/ranges.hpp>
@@ -59,19 +59,19 @@ radio_ctrl_impl::radio_ctrl_impl() :
             // poke32 functor
             boost::bind(
                 static_cast< void (block_ctrl_base::*)(const uint32_t, const uint32_t, const size_t) >(&block_ctrl_base::sr_write),
-                this, _1, _2, i
+                this, boost::placeholders::_1, boost::placeholders::_2, i
             ),
             // peek32 functor
             boost::bind(
                 static_cast< uint32_t (block_ctrl_base::*)(const uint32_t, const size_t) >(&block_ctrl_base::user_reg_read32),
                 this,
-                _1, i
+                boost::placeholders::_1, i
             ),
             // peek64 functor
             boost::bind(
                 static_cast< uint64_t (block_ctrl_base::*)(const uint32_t, const size_t) >(&block_ctrl_base::user_reg_read64),
                 this,
-                _1, i
+                boost::placeholders::_1, i
             ),
             // get_time functor
             boost::bind(
@@ -82,7 +82,7 @@ radio_ctrl_impl::radio_ctrl_impl() :
             boost::bind(
                 static_cast< void (block_ctrl_base::*)(const time_spec_t&, const size_t) >(&block_ctrl_base::set_command_time),
                 this,
-                _1, i
+                boost::placeholders::_1, i
             )
         );
 
@@ -117,20 +117,20 @@ radio_ctrl_impl::radio_ctrl_impl() :
         _tree->create<time_spec_t>(fs_path("time") / "cmd");
     }
     _tree->access<time_spec_t>(fs_path("time") / "now")
-        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::set_time_now, this, _1))
+        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::set_time_now, this, boost::placeholders::_1))
     ;
     _tree->access<time_spec_t>(fs_path("time") / "pps")
-        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::set_time_next_pps, this, _1))
+        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::set_time_next_pps, this, boost::placeholders::_1))
     ;
     for (size_t i = 0; i < _get_num_radios(); i++) {
         _tree->access<time_spec_t>("time/cmd")
             .add_coerced_subscriber(boost::bind(&block_ctrl_base::set_command_tick_rate, this, boost::ref(_tick_rate), i))
-            .add_coerced_subscriber(boost::bind(&block_ctrl_base::set_command_time, this, _1, i))
+            .add_coerced_subscriber(boost::bind(&block_ctrl_base::set_command_time, this, boost::placeholders::_1, i))
         ;
     }
     // spp gets created in the XML file
     _tree->access<int>(get_arg_path("spp") / "value")
-        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::_update_spp, this, _1))
+        .add_coerced_subscriber(boost::bind(&radio_ctrl_impl::_update_spp, this, boost::placeholders::_1))
         .update()
     ;
 }

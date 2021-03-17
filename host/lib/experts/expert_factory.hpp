@@ -22,7 +22,7 @@
 #include <uhd/property_tree.hpp>
 #include <uhd/config.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <memory>
 
 namespace uhd { namespace experts {
@@ -104,7 +104,7 @@ namespace uhd { namespace experts {
             data_node_t<data_t>* node_ptr =
                 new data_node_t<data_t>(name, init_val, &container->resolve_mutex());
             prop.set(init_val);
-            prop.add_desired_subscriber(boost::bind(&data_node_t<data_t>::commit, node_ptr, _1));
+            prop.add_desired_subscriber(boost::bind(&data_node_t<data_t>::commit, node_ptr, boost::placeholders::_1));
             prop.set_publisher(boost::bind(&data_node_t<data_t>::retrieve, node_ptr));
             container->add_data_node(node_ptr, mode);
             return prop;
@@ -171,7 +171,7 @@ namespace uhd { namespace experts {
                 new data_node_t<data_t>(coerced_name, init_val, &container->resolve_mutex());
             prop.set(init_val);
             prop.set_coerced(init_val);
-            prop.add_desired_subscriber(boost::bind(&data_node_t<data_t>::commit, desired_node_ptr, _1));
+            prop.add_desired_subscriber(boost::bind(&data_node_t<data_t>::commit, desired_node_ptr, boost::placeholders::_1));
             prop.set_publisher(boost::bind(&data_node_t<data_t>::retrieve, coerced_node_ptr));
 
             container->add_data_node(desired_node_ptr,

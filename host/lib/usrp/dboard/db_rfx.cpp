@@ -45,7 +45,7 @@
 #include <uhd/usrp/dboard_base.hpp>
 #include <uhd/usrp/dboard_manager.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/math/special_functions/round.hpp>
 
@@ -186,17 +186,17 @@ rfx_xcvr::rfx_xcvr(
         .set_publisher(boost::bind(&rfx_xcvr::get_locked, this, dboard_iface::UNIT_RX));
     BOOST_FOREACH(const std::string &name, _rx_gain_ranges.keys()){
         this->get_rx_subtree()->create<double>("gains/"+name+"/value")
-            .set_coercer(boost::bind(&rfx_xcvr::set_rx_gain, this, _1, name))
+            .set_coercer(boost::bind(&rfx_xcvr::set_rx_gain, this, boost::placeholders::_1, name))
             .set(_rx_gain_ranges[name].start());
         this->get_rx_subtree()->create<meta_range_t>("gains/"+name+"/range")
             .set(_rx_gain_ranges[name]);
     }
     this->get_rx_subtree()->create<double>("freq/value")
-        .set_coercer(boost::bind(&rfx_xcvr::set_lo_freq, this, dboard_iface::UNIT_RX, _1))
+        .set_coercer(boost::bind(&rfx_xcvr::set_lo_freq, this, dboard_iface::UNIT_RX, boost::placeholders::_1))
         .set((_freq_range.start() + _freq_range.stop())/2.0);
     this->get_rx_subtree()->create<meta_range_t>("freq/range").set(_freq_range);
     this->get_rx_subtree()->create<std::string>("antenna/value")
-        .add_coerced_subscriber(boost::bind(&rfx_xcvr::set_rx_ant, this, _1))
+        .add_coerced_subscriber(boost::bind(&rfx_xcvr::set_rx_ant, this, boost::placeholders::_1))
         .set("RX2");
     this->get_rx_subtree()->create<std::vector<std::string> >("antenna/options")
         .set(rfx_rx_antennas);
@@ -222,11 +222,11 @@ rfx_xcvr::rfx_xcvr(
         .set_publisher(boost::bind(&rfx_xcvr::get_locked, this, dboard_iface::UNIT_TX));
     this->get_tx_subtree()->create<int>("gains"); //phony property so this dir exists
     this->get_tx_subtree()->create<double>("freq/value")
-        .set_coercer(boost::bind(&rfx_xcvr::set_lo_freq, this, dboard_iface::UNIT_TX, _1))
+        .set_coercer(boost::bind(&rfx_xcvr::set_lo_freq, this, dboard_iface::UNIT_TX, boost::placeholders::_1))
         .set((_freq_range.start() + _freq_range.stop())/2.0);
     this->get_tx_subtree()->create<meta_range_t>("freq/range").set(_freq_range);
     this->get_tx_subtree()->create<std::string>("antenna/value")
-        .add_coerced_subscriber(boost::bind(&rfx_xcvr::set_tx_ant, this, _1)).set(rfx_tx_antennas.at(0));
+        .add_coerced_subscriber(boost::bind(&rfx_xcvr::set_tx_ant, this, boost::placeholders::_1)).set(rfx_tx_antennas.at(0));
     this->get_tx_subtree()->create<std::vector<std::string> >("antenna/options")
         .set(rfx_tx_antennas);
     this->get_tx_subtree()->create<std::string>("connection").set("IQ");
@@ -275,7 +275,7 @@ void rfx_xcvr::set_rx_ant(const std::string &ant){
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_RX, gpio_atr::ATR_REG_TX_ONLY,     _power_up | ANT_TXRX  | MIXER_ENB);
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_RX, gpio_atr::ATR_REG_FULL_DUPLEX, _power_up | ANT_TXRX  | MIXER_ENB);
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_RX, gpio_atr::ATR_REG_RX_ONLY,     _power_up | MIXER_ENB | ANT_TXRX );
-    } 
+    }
     else {
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_RX, gpio_atr::ATR_REG_TX_ONLY,     _power_up | ANT_XX | MIXER_DIS);
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_RX, gpio_atr::ATR_REG_FULL_DUPLEX, _power_up | ANT_RX2| MIXER_ENB);
@@ -294,7 +294,7 @@ void rfx_xcvr::set_tx_ant(const std::string &ant){
     if (ant == "CAL") {
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_TX, gpio_atr::ATR_REG_TX_ONLY,     _power_up | ANT_RX | MIXER_ENB);
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_TX, gpio_atr::ATR_REG_FULL_DUPLEX, _power_up | ANT_RX | MIXER_ENB);
-    } 
+    }
     else {
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_TX, gpio_atr::ATR_REG_TX_ONLY,     _power_up | ANT_TX | MIXER_ENB);
         this->get_iface()->set_atr_reg(dboard_iface::UNIT_TX, gpio_atr::ATR_REG_FULL_DUPLEX, _power_up | ANT_TX | MIXER_ENB);
@@ -321,7 +321,7 @@ static double rx_pga0_gain_to_dac_volts(double &gain, double range){
 double rfx_xcvr::set_rx_gain(double gain, const std::string &name){
     assert_has(_rx_gain_ranges.keys(), name, "rfx rx gain name");
     if(name == "PGA0"){
-        double dac_volts = rx_pga0_gain_to_dac_volts(gain, 
+        double dac_volts = rx_pga0_gain_to_dac_volts(gain,
                               (_rx_gain_ranges["PGA0"].stop() - _rx_gain_ranges["PGA0"].start()));
 
         //write the new voltage to the aux dac

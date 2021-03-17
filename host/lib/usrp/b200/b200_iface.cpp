@@ -220,7 +220,7 @@ public:
             file_reader.read(
                 boost::bind(
                     &b200_iface_impl::fx3_control_write, this,
-                    FX3_FIRMWARE_LOAD, _1, _2, _3, _4, 0
+                    FX3_FIRMWARE_LOAD, boost::placeholders::_1, boost::placeholders::_2, _3, _4, 0
                 )
             );
         } catch (const uhd::io_error &e) {

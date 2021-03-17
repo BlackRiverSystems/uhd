@@ -23,7 +23,7 @@
 #include <uhd/usrp/dboard_base.hpp>
 #include <uhd/usrp/dboard_manager.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 
 using namespace uhd;
@@ -104,7 +104,7 @@ UHD_STATIC_BLOCK(reg_basic_and_lf_dboards){
 basic_rx::basic_rx(ctor_args_t args, double max_freq) : rx_dboard_base(args){
     _max_freq = max_freq;
     //this->get_iface()->set_clock_enabled(dboard_iface::UNIT_RX, true);
-    
+
     ////////////////////////////////////////////////////////////////////
     // Register properties
     ////////////////////////////////////////////////////////////////////
@@ -139,7 +139,7 @@ basic_rx::basic_rx(ctor_args_t args, double max_freq) : rx_dboard_base(args){
         .set(subdev_bandwidth_scalar[get_subdev_name()]*_max_freq);
     this->get_rx_subtree()->create<meta_range_t>("bandwidth/range")
         .set(freq_range_t(subdev_bandwidth_scalar[get_subdev_name()]*_max_freq, subdev_bandwidth_scalar[get_subdev_name()]*_max_freq));
-    
+
     //disable RX dboard clock by default
     this->get_iface()->set_clock_enabled(dboard_iface::UNIT_RX, false);
 
@@ -194,7 +194,7 @@ basic_tx::basic_tx(ctor_args_t args, double max_freq) : tx_dboard_base(args){
         .set(subdev_bandwidth_scalar[get_subdev_name()]*_max_freq);
     this->get_tx_subtree()->create<meta_range_t>("bandwidth/range")
         .set(freq_range_t(subdev_bandwidth_scalar[get_subdev_name()]*_max_freq, subdev_bandwidth_scalar[get_subdev_name()]*_max_freq));
-    
+
     //disable TX dboard clock by default
     this->get_iface()->set_clock_enabled(dboard_iface::UNIT_TX, false);
 

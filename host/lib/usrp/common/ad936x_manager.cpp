@@ -224,7 +224,7 @@ class ad936x_manager_impl : public ad936x_manager
                 .set(ad9361_ctrl::get_gain_range(key));
             subtree->create<double>(uhd::fs_path("gains") / name / "value")
                 .set(ad936x_manager::DEFAULT_GAIN)
-                .set_coercer(boost::bind(&ad9361_ctrl::set_gain, _codec_ctrl, key, _1))
+                .set_coercer(boost::bind(&ad9361_ctrl::set_gain, _codec_ctrl, key, boost::placeholders::_1))
             ;
         }
 
@@ -236,7 +236,7 @@ class ad936x_manager_impl : public ad936x_manager
         // Analog Bandwidths
         subtree->create<double>("bandwidth/value")
             .set(ad936x_manager::DEFAULT_BANDWIDTH)
-            .set_coercer(boost::bind(&ad9361_ctrl::set_bw_filter, _codec_ctrl, key, _1))
+            .set_coercer(boost::bind(&ad9361_ctrl::set_bw_filter, _codec_ctrl, key, boost::placeholders::_1))
         ;
         subtree->create<meta_range_t>("bandwidth/range")
             .set_publisher(boost::bind(&ad9361_ctrl::get_bw_filter_range, key))
@@ -248,7 +248,7 @@ class ad936x_manager_impl : public ad936x_manager
         ;
         subtree->create<double>("freq/value")
             .set_publisher(boost::bind(&ad9361_ctrl::get_freq, _codec_ctrl, key))
-            .set_coercer(boost::bind(&ad9361_ctrl::tune, _codec_ctrl, key, _1))
+            .set_coercer(boost::bind(&ad9361_ctrl::tune, _codec_ctrl, key, boost::placeholders::_1))
         ;
 
         // Frontend corrections
@@ -256,21 +256,21 @@ class ad936x_manager_impl : public ad936x_manager
         {
             subtree->create<bool>("dc_offset/enable" )
                 .set(ad936x_manager::DEFAULT_AUTO_DC_OFFSET)
-                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_dc_offset_auto, _codec_ctrl, key, _1))
+                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_dc_offset_auto, _codec_ctrl, key, boost::placeholders::_1))
             ;
             subtree->create<bool>("iq_balance/enable" )
                 .set(ad936x_manager::DEFAULT_AUTO_IQ_BALANCE)
-                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_iq_balance_auto, _codec_ctrl, key, _1))
+                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_iq_balance_auto, _codec_ctrl, key, boost::placeholders::_1))
             ;
 
             // AGC setup
             const std::list<std::string> mode_strings = boost::assign::list_of("slow")("fast");
             subtree->create<bool>("gain/agc/enable")
                 .set(DEFAULT_AGC_ENABLE)
-                .add_coerced_subscriber(boost::bind((&ad9361_ctrl::set_agc), _codec_ctrl, key, _1))
+                .add_coerced_subscriber(boost::bind((&ad9361_ctrl::set_agc), _codec_ctrl, key, boost::placeholders::_1))
             ;
             subtree->create<std::string>("gain/agc/mode/value")
-                .add_coerced_subscriber(boost::bind((&ad9361_ctrl::set_agc_mode), _codec_ctrl, key, _1)).set(mode_strings.front())
+                .add_coerced_subscriber(boost::bind((&ad9361_ctrl::set_agc_mode), _codec_ctrl, key, boost::placeholders::_1)).set(mode_strings.front())
             ;
             subtree->create< std::list<std::string> >("gain/agc/mode/options")
                 .set(mode_strings)
@@ -281,7 +281,7 @@ class ad936x_manager_impl : public ad936x_manager
         BOOST_FOREACH(const std::string &filter_name, _codec_ctrl->get_filter_names(key)) {
             subtree->create<filter_info_base::sptr>(uhd::fs_path("filters") / filter_name / "value" )
                 .set_publisher(boost::bind(&ad9361_ctrl::get_filter, _codec_ctrl, key, filter_name))
-                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_filter, _codec_ctrl, key, filter_name, _1));
+                .add_coerced_subscriber(boost::bind(&ad9361_ctrl::set_filter, _codec_ctrl, key, filter_name, boost::placeholders::_1));
         }
     }
 

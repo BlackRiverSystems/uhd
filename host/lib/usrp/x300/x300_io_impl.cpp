@@ -22,7 +22,7 @@
 #include <uhd/transport/nirio_zero_copy.hpp>
 #include "async_packet_handler.hpp"
 #include <uhd/transport/bounded_buffer.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <uhd/utils/tasks.hpp>
 #include <uhd/utils/log.hpp>
 #include <uhd/utils/msg.hpp>

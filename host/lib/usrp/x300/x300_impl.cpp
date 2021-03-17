@@ -29,7 +29,7 @@
 #include <uhd/usrp/subdev_spec.hpp>
 #include <uhd/transport/if_addrs.hpp>
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/assign/list_of.hpp>
@@ -759,7 +759,7 @@ void x300_impl::setup_mb(const size_t mb_i, const uhd::device_addr_t &dev_addr)
     const mboard_eeprom_t mb_eeprom(*eeprom16, "X300");
     _tree->create<mboard_eeprom_t>(mb_path / "eeprom")
         .set(mb_eeprom)
-        .add_coerced_subscriber(boost::bind(&x300_impl::set_mb_eeprom, this, mb.zpu_i2c, _1));
+        .add_coerced_subscriber(boost::bind(&x300_impl::set_mb_eeprom, this, mb.zpu_i2c, boost::placeholders::_1));
 
     bool recover_mb_eeprom = dev_addr.has_key("recover_mb_eeprom");
     if (recover_mb_eeprom) {
@@ -914,13 +914,13 @@ void x300_impl::setup_mb(const size_t mb_i, const uhd::device_addr_t &dev_addr)
     ////////////////////////////////////////////////////////////////////
     _tree->create<std::string>(mb_path / "time_source" / "value")
         .set("internal")
-        .add_coerced_subscriber(boost::bind(&x300_impl::update_time_source, this, boost::ref(mb), _1));
+        .add_coerced_subscriber(boost::bind(&x300_impl::update_time_source, this, boost::ref(mb), boost::placeholders::_1));
     static const std::vector<std::string> time_sources = boost::assign::list_of("internal")("external")("gpsdo");
     _tree->create<std::vector<std::string> >(mb_path / "time_source" / "options").set(time_sources);
 
     //setup the time output, default to ON
     _tree->create<bool>(mb_path / "time_source" / "output")
-        .add_coerced_subscriber(boost::bind(&x300_impl::set_time_source_out, this, boost::ref(mb), _1))
+        .add_coerced_subscriber(boost::bind(&x300_impl::set_time_source_out, this, boost::ref(mb), boost::placeholders::_1))
         .set(true);
 
     ////////////////////////////////////////////////////////////////////
@@ -928,7 +928,7 @@ void x300_impl::setup_mb(const size_t mb_i, const uhd::device_addr_t &dev_addr)
     ////////////////////////////////////////////////////////////////////
     _tree->create<std::string>(mb_path / "clock_source" / "value")
         .set(X300_DEFAULT_CLOCK_SOURCE)
-        .add_coerced_subscriber(boost::bind(&x300_impl::update_clock_source, this, boost::ref(mb), _1));
+        .add_coerced_subscriber(boost::bind(&x300_impl::update_clock_source, this, boost::ref(mb), boost::placeholders::_1));
 
     static const std::vector<std::string> clock_source_options = boost::assign::list_of("internal")("external")("gpsdo");
     _tree->create<std::vector<std::string> >(mb_path / "clock_source" / "options").set(clock_source_options);
@@ -944,12 +944,12 @@ void x300_impl::setup_mb(const size_t mb_i, const uhd::device_addr_t &dev_addr)
 
     //setup the clock output, default to ON
     _tree->create<bool>(mb_path / "clock_source" / "output")
-        .add_coerced_subscriber(boost::bind(&x300_clock_ctrl::set_ref_out, mb.clock, _1));
+        .add_coerced_subscriber(boost::bind(&x300_clock_ctrl::set_ref_out, mb.clock, boost::placeholders::_1));
 
     //initialize tick rate (must be done before setting time)
     _tree->create<double>(mb_path / "tick_rate")
-        .add_coerced_subscriber(boost::bind(&device3_impl::update_tx_streamers, this, _1))
-        .add_coerced_subscriber(boost::bind(&device3_impl::update_rx_streamers, this, _1))
+        .add_coerced_subscriber(boost::bind(&device3_impl::update_tx_streamers, this, boost::placeholders::_1))
+        .add_coerced_subscriber(boost::bind(&device3_impl::update_rx_streamers, this, boost::placeholders::_1))
         .set(mb.clock->get_master_clock_rate())
     ;
 
@@ -998,7 +998,7 @@ void x300_impl::setup_mb(const size_t mb_i, const uhd::device_addr_t &dev_addr)
         if (dev_addr.has_key("self_cal_adc_delay")) {
             rfnoc::x300_radio_ctrl_impl::self_cal_adc_xfer_delay(
                 mb.radios, mb.clock,
-                boost::bind(&x300_impl::wait_for_clk_locked, this, mb, fw_regmap_t::clk_status_reg_t::LMK_LOCK, _1),
+                boost::bind(&x300_impl::wait_for_clk_locked, this, mb, fw_regmap_t::clk_status_reg_t::LMK_LOCK, boost::placeholders::_1),
                 true /* Apply ADC delay */);
         }
         if (dev_addr.has_key("ext_adc_self_test")) {

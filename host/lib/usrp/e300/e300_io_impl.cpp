@@ -23,7 +23,7 @@
 #include "../../transport/super_send_packet_handler.hpp"
 #include "async_packet_handler.hpp"
 #include <uhd/transport/bounded_buffer.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <uhd/utils/tasks.hpp>
 #include <uhd/utils/log.hpp>
 #include <boost/foreach.hpp>
@@ -491,7 +491,7 @@ rx_streamer::sptr e300_impl::get_rx_stream(const uhd::stream_args_t &args_)
         boost::shared_ptr<e300_rx_fc_cache_t> fc_cache(new e300_rx_fc_cache_t());
 
         my_streamer->set_xport_chan_get_buff(stream_i, boost::bind(
-            &zero_copy_if::get_recv_buff, data_xports.recv, _1
+            &zero_copy_if::get_recv_buff, data_xports.recv, boost::placeholders::_1
         ), true /*flush*/);
         my_streamer->set_overflow_handler(stream_i,
             boost::bind(&e300_impl::_handle_overflow, this, boost::ref(perif),
@@ -499,11 +499,11 @@ rx_streamer::sptr e300_impl::get_rx_stream(const uhd::stream_args_t &args_)
         );
 
         my_streamer->set_xport_handle_flowctrl(stream_i,
-            boost::bind(&handle_rx_flowctrl, data_sid, data_xports.send, fc_cache, _1),
+            boost::bind(&handle_rx_flowctrl, data_sid, data_xports.send, fc_cache, boost::placeholders::_1),
             fc_handle_window, true/*init*/);
 
         my_streamer->set_issue_stream_cmd(stream_i,
-            boost::bind(&rx_vita_core_3000::issue_stream_command, perif.framer, _1)
+            boost::bind(&rx_vita_core_3000::issue_stream_command, perif.framer, boost::placeholders::_1)
         );
         perif.rx_streamer = my_streamer; //store weak pointer
 
@@ -610,11 +610,11 @@ tx_streamer::sptr e300_impl::get_tx_stream(const uhd::stream_args_t &args_)
 
         my_streamer->set_xport_chan_get_buff(
             stream_i,
-            boost::bind(&get_tx_buff_with_flowctrl, task, fc_cache, data_xports.send, fc_window, _1)
+            boost::bind(&get_tx_buff_with_flowctrl, task, fc_cache, data_xports.send, fc_window, boost::placeholders::_1)
         );
 
         my_streamer->set_async_receiver(
-            boost::bind(&async_md_type::pop_with_timed_wait, async_md, _1, _2)
+            boost::bind(&async_md_type::pop_with_timed_wait, async_md, boost::placeholders::_1, boost::placeholders::_2)
         );
         my_streamer->set_xport_chan_sid(stream_i, true, data_sid);
         my_streamer->set_enable_trailer(false); //TODO not implemented trailer support yet

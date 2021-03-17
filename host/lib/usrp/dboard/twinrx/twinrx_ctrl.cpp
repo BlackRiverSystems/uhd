@@ -48,27 +48,27 @@ public:
         //Initialize synthesizer objects
         if (rx_id == twinrx::TWINRX_REV_C_ID) {
           _lo1_iface[size_t(CH1)] = adf535x_iface::make_adf5356(
-                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, _1));
+                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, boost::placeholders::_1));
           _lo1_iface[size_t(CH2)] = adf535x_iface::make_adf5356(
-                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, _1));
+                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, boost::placeholders::_1));
 
           _lo1_iface[size_t(CH1)]->set_pfd_freq(TWINRX_REV_C_PFD_FREQ);
           _lo1_iface[size_t(CH2)]->set_pfd_freq(TWINRX_REV_C_PFD_FREQ);
 
         } else {
           _lo1_iface[size_t(CH1)] = adf535x_iface::make_adf5355(
-                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, _1));
+                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, boost::placeholders::_1));
           _lo1_iface[size_t(CH2)] = adf535x_iface::make_adf5355(
-                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, _1));
+                  boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_TX, boost::placeholders::_1));
 
           _lo1_iface[size_t(CH1)]->set_pfd_freq(TWINRX_REV_AB_PFD_FREQ);
           _lo1_iface[size_t(CH2)]->set_pfd_freq(TWINRX_REV_AB_PFD_FREQ);
         }
 
         _lo2_iface[size_t(CH1)] = adf435x_iface::make_adf4351(
-                boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_RX, _1));
+                boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_RX, boost::placeholders::_1));
         _lo2_iface[size_t(CH2)] = adf435x_iface::make_adf4351(
-                boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_RX, _1));
+                boost::bind(&twinrx_ctrl_impl::_write_lo_spi, this, dboard_iface::UNIT_RX, boost::placeholders::_1));
 
         // Assert synthesizer chip enables
         _gpio_iface->set_field(twinrx_gpio::FIELD_LO1_CE_CH1, 1);
