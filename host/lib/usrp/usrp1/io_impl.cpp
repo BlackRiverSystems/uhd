@@ -147,7 +147,7 @@ struct usrp1_impl::io_impl{
     io_impl(zero_copy_if::sptr data_transport):
         data_transport(data_transport),
         curr_buff(offset_send_buffer(data_transport->get_send_buff())),
-        omsb(boost::bind(&usrp1_impl::io_impl::commit_send_buff, this, boost::placeholders::_1, boost::placeholders::_2, _3))
+        omsb(boost::bind(&usrp1_impl::io_impl::commit_send_buff, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
     {
         /* NOP */
     }

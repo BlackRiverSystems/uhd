@@ -58,26 +58,26 @@ public:
          */
 
         _rx_filters = (boost::assign::map_list_of("LPF_TIA", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_lp_tia_sec, this, boost::placeholders::_1),
-                                                    boost::bind(&ad9361_device_t::_set_filter_lp_tia_sec, this, boost::placeholders::_1, _3)))
+                                                    boost::bind(&ad9361_device_t::_set_filter_lp_tia_sec, this, boost::placeholders::_1, boost::placeholders::_3)))
                                             ("LPF_BB", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_lp_bb, this, boost::placeholders::_1),
-                                                    boost::bind(&ad9361_device_t::_set_filter_lp_bb, this, boost::placeholders::_1, _3)))
+                                                    boost::bind(&ad9361_device_t::_set_filter_lp_bb, this, boost::placeholders::_1, boost::placeholders::_3)))
                                             ("HB_3", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_3, this, boost::placeholders::_1), 0))
                                             ("DEC_3", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_dec_int_3, this, boost::placeholders::_1), 0))
                                             ("HB_2", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_2, this, boost::placeholders::_1), 0))
                                             ("HB_1", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_1, this, boost::placeholders::_1), 0))
                                             ("FIR_1", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2),
-                                                    boost::bind(&ad9361_device_t::_set_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2, _3)))).to_container(_rx_filters);
+                                                    boost::bind(&ad9361_device_t::_set_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)))).to_container(_rx_filters);
 
         _tx_filters = (boost::assign::map_list_of("LPF_SECONDARY", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_lp_tia_sec, this, boost::placeholders::_1),
-                                                    boost::bind(&ad9361_device_t::_set_filter_lp_tia_sec, this, boost::placeholders::_1, _3)))
+                                                    boost::bind(&ad9361_device_t::_set_filter_lp_tia_sec, this, boost::placeholders::_1, boost::placeholders::_3)))
                                             ("LPF_BB", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_lp_bb, this, boost::placeholders::_1),
-                                                    boost::bind(&ad9361_device_t::_set_filter_lp_bb, this, boost::placeholders::_1, _3)))
+                                                    boost::bind(&ad9361_device_t::_set_filter_lp_bb, this, boost::placeholders::_1, boost::placeholders::_3)))
                                             ("HB_3", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_3, this, boost::placeholders::_1), 0))
                                             ("INT_3", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_dec_int_3, this, boost::placeholders::_1), 0))
                                             ("HB_2", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_2, this, boost::placeholders::_1), 0))
                                             ("HB_1", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_hb_1, this, boost::placeholders::_1), 0))
                                             ("FIR_1", filter_query_helper(boost::bind(&ad9361_device_t::_get_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2),
-                                                    boost::bind(&ad9361_device_t::_set_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2, _3)))).to_container(_tx_filters);
+                                                    boost::bind(&ad9361_device_t::_set_filter_fir, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)))).to_container(_tx_filters);
     }
 
     /* Initialize the AD9361 codec. */
