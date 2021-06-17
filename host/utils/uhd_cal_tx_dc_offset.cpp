@@ -30,12 +30,17 @@
 #include <complex>
 #include <ctime>
 
+#include <atomic>
+#include <future>
+#include <memory>
+#include <thread>
+
 namespace po = boost::program_options;
 
 /***********************************************************************
  * Transmit thread
  **********************************************************************/
-static void tx_thread(uhd::usrp::multi_usrp::sptr usrp, const double tx_wave_freq, const double tx_wave_ampl)
+static void tx_thread(uhd::usrp::multi_usrp::sptr usrp, const double tx_wave_freq, const double tx_wave_ampl, std::shared_ptr<std::atomic_bool> run)
 {
     uhd::set_thread_priority_safe();
 
@@ -58,7 +63,7 @@ static void tx_thread(uhd::usrp::multi_usrp::sptr usrp, const double tx_wave_fre
     wave_table table(tx_wave_ampl);
 
     //fill buff and send until interrupted
-    while (not boost::this_thread::interruption_requested())
+    while (run->load())
     {
         for (size_t i = 0; i < buff.size(); i++)
             buff[i] = table(index += step);
@@ -158,8 +163,8 @@ int UHD_SAFE_MAIN(int argc, char *argv[])
     uhd::rx_streamer::sptr rx_stream = usrp->get_rx_stream(stream_args);
 
     //create a transmitter thread
-    boost::thread_group threads;
-    threads.create_thread(boost::bind(&tx_thread, usrp, tx_wave_freq, tx_wave_ampl));
+    auto run = std::make_shared<std::atomic_bool> (true);
+    auto thread = std::async(std::launch::async, &tx_thread, usrp, tx_wave_freq, tx_wave_ampl, run);
 
     //re-usable buffer for samples
     std::vector<samp_type> buff;
@@ -274,9 +279,8 @@ int UHD_SAFE_MAIN(int argc, char *argv[])
     std::cout << std::endl;
 
     //stop the transmitter
-    threads.interrupt_all();
-    boost::this_thread::sleep(boost::posix_time::milliseconds(2500));    //wait for threads to finish
-    threads.join_all();
+    run->store(false);
+    thread.wait();
 
     store_results(results, "TX", "tx", "dc", serial);
 
