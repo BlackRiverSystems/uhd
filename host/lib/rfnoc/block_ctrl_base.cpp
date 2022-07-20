@@ -27,7 +27,7 @@
 #include <uhd/rfnoc/constants.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #define UHD_BLOCK_LOG() UHD_LOGV(never)
 

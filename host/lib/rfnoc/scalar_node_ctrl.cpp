@@ -16,7 +16,7 @@
 //
 
 #include <uhd/rfnoc/scalar_node_ctrl.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 using namespace uhd::rfnoc;
 
@@ -38,7 +38,7 @@ double scalar_node_ctrl::get_input_scale_factor(
 ) {
     try {
         return find_downstream_unique_property<scalar_node_ctrl, double>(
-                boost::bind(_get_input_factor, _1, _2),
+                boost::bind(_get_input_factor, boost::placeholders::_1, boost::placeholders::_2),
                 SCALE_UNDEFINED
         );
     } catch (const uhd::runtime_error &ex) {
@@ -54,7 +54,7 @@ double scalar_node_ctrl::get_output_scale_factor(
 ) {
     try {
         return find_upstream_unique_property<scalar_node_ctrl, double>(
-                boost::bind(_get_output_factor, _1, _2),
+                boost::bind(_get_output_factor, boost::placeholders::_1, boost::placeholders::_2),
                 SCALE_UNDEFINED
         );
     } catch (const uhd::runtime_error &ex) {

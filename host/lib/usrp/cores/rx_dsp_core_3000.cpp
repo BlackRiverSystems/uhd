@@ -101,7 +101,7 @@ public:
         if (fe_conn.get_sampling_mode() == uhd::usrp::fe_connection_t::HETERODYNE) {
             //1. Remember the sign of the IF frequency.
             //   It will be discarded in the next step
-            int if_freq_sign = boost::math::sign(fe_conn.get_if_freq());
+            int if_freq_sign = std::signbit(fe_conn.get_if_freq()) ? -1 : 1;
             //2. Map IF frequency to the range [0, _tick_rate)
             double if_freq = std::abs(std::fmod(fe_conn.get_if_freq(), _tick_rate));
             //3. Map IF frequency to the range [-_tick_rate/2, _tick_rate/2)
@@ -284,11 +284,11 @@ public:
         ;
         subtree->create<double>("rate/value")
             .set(DEFAULT_RATE)
-            .set_coercer(boost::bind(&rx_dsp_core_3000::set_host_rate, this, _1))
+            .set_coercer(boost::bind(&rx_dsp_core_3000::set_host_rate, this, boost::placeholders::_1))
         ;
         subtree->create<double>("freq/value")
             .set(DEFAULT_CORDIC_FREQ)
-            .set_coercer(boost::bind(&rx_dsp_core_3000::set_freq, this, _1))
+            .set_coercer(boost::bind(&rx_dsp_core_3000::set_freq, this, boost::placeholders::_1))
         ;
         subtree->create<meta_range_t>("freq/range")
             .set_publisher(boost::bind(&rx_dsp_core_3000::get_freq_range, this))

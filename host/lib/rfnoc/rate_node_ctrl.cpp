@@ -16,7 +16,7 @@
 //
 
 #include <uhd/rfnoc/rate_node_ctrl.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 using namespace uhd::rfnoc;
 
@@ -39,7 +39,7 @@ double rate_node_ctrl::get_input_samp_rate(
 ) {
     try {
         return find_downstream_unique_property<rate_node_ctrl, double>(
-                boost::bind(_get_input_samp_rate, _1, _2),
+                boost::bind(_get_input_samp_rate, boost::placeholders::_1, boost::placeholders::_2),
                 RATE_UNDEFINED
         );
     } catch (const uhd::runtime_error &ex) {
@@ -55,7 +55,7 @@ double rate_node_ctrl::get_output_samp_rate(
 ) {
     try {
         return find_upstream_unique_property<rate_node_ctrl, double>(
-                boost::bind(_get_output_samp_rate, _1, _2),
+                boost::bind(_get_output_samp_rate, boost::placeholders::_1, boost::placeholders::_2),
                 RATE_UNDEFINED
         );
     } catch (const uhd::runtime_error &ex) {

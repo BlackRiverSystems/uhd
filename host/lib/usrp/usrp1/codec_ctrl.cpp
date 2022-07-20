@@ -27,7 +27,6 @@
 #include <boost/format.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/math/special_functions/round.hpp>
-#include <boost/math/special_functions/sign.hpp>
 #include <boost/assign/list_of.hpp>
 #include <iomanip>
 
@@ -62,7 +61,7 @@ public:
     double get_tx_pga_gain(void);
     void set_rx_pga_gain(double, char);
     double get_rx_pga_gain(char);
-    
+
     //rx adc buffer control
     void bypass_adc_buffers(bool bypass);
 
@@ -306,7 +305,7 @@ void usrp1_codec_ctrl_impl::recv_reg(uint8_t addr)
 }
 
 /***********************************************************************
- * DUC tuning 
+ * DUC tuning
  **********************************************************************/
 double usrp1_codec_ctrl_impl::coarse_tune(double codec_rate, double freq)
 {
@@ -317,7 +316,7 @@ double usrp1_codec_ctrl_impl::coarse_tune(double codec_rate, double freq)
     double coarse_limit_1 = coarse_freq_1 / 2;
     double coarse_limit_2 = (coarse_freq_1 + coarse_freq_2) / 2;
     double max_freq = coarse_freq_2 + .09375 * codec_rate;
- 
+
     if (freq < -max_freq) {
         return false;
     }
@@ -333,7 +332,7 @@ double usrp1_codec_ctrl_impl::coarse_tune(double codec_rate, double freq)
     }
     else if (freq < coarse_limit_1) {
         _ad9862_regs.coarse_mod = ad9862_regs_t::COARSE_MOD_BYPASS;
-        coarse_freq = 0; 
+        coarse_freq = 0;
     }
     else if (freq < coarse_limit_2) {
         _ad9862_regs.neg_coarse_tune = ad9862_regs_t::NEG_COARSE_TUNE_POS_SHIFT;
@@ -346,7 +345,7 @@ double usrp1_codec_ctrl_impl::coarse_tune(double codec_rate, double freq)
         coarse_freq = coarse_freq_2;
     }
     else {
-        return 0; 
+        return 0;
     }
 
     return coarse_freq;
@@ -363,11 +362,11 @@ double usrp1_codec_ctrl_impl::fine_tune(double codec_rate, double target_freq)
 
     if (target_freq < 0) {
         _ad9862_regs.neg_fine_tune = ad9862_regs_t::NEG_FINE_TUNE_NEG_SHIFT;
-        actual_freq = -actual_freq; 
+        actual_freq = -actual_freq;
     }
     else {
         _ad9862_regs.neg_fine_tune = ad9862_regs_t::NEG_FINE_TUNE_POS_SHIFT;
-    } 
+    }
 
     _ad9862_regs.fine_mode = ad9862_regs_t::FINE_MODE_NCO;
     _ad9862_regs.ftw_23_16 = (freq_word >> 16) & 0xff;
@@ -384,7 +383,7 @@ void usrp1_codec_ctrl_impl::set_duc_freq(double freq, double rate)
     //correct for outside of rate (wrap around)
     freq = std::fmod(freq, rate);
     if (std::abs(freq) > rate/2.0)
-        freq -= boost::math::sign(freq)*rate;
+        freq -= (std::signbit(freq) ? -1 : 1) * rate;
 
     double coarse_freq = coarse_tune(codec_rate, freq);
     double fine_freq = fine_tune(codec_rate / 4, freq - coarse_freq);

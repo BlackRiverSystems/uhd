@@ -20,7 +20,7 @@
 #include <uhd/exception.hpp>
 #include <uhd/utils/msg.hpp>
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 
 #define UHD_NOCSCRIPT_LOG() UHD_LOGV(never)
@@ -40,7 +40,7 @@ block_iface::block_iface(block_ctrl_base *block_ptr)
     ;
     ft->register_function(
         "SR_WRITE",
-        boost::bind(&block_iface::_nocscript__sr_write, this, _1),
+        boost::bind(&block_iface::_nocscript__sr_write, this, boost::placeholders::_1),
         expression::TYPE_BOOL,
         sr_write_args
     );
@@ -60,13 +60,13 @@ block_iface::block_iface(block_ctrl_base *block_ptr)
     arg_set_args_w_port[1] = expression::noctype; \
     ft->register_function( \
         "SET_ARG", \
-        boost::bind(&block_iface::setter_func, this, _1), \
+        boost::bind(&block_iface::setter_func, this, boost::placeholders::_1), \
         expression::TYPE_BOOL, \
         arg_set_args_wo_port \
     ); \
     ft->register_function( \
         "SET_ARG", \
-        boost::bind(&block_iface::setter_func, this, _1), \
+        boost::bind(&block_iface::setter_func, this, boost::placeholders::_1), \
         expression::TYPE_BOOL, \
         arg_set_args_w_port \
     );
@@ -88,13 +88,13 @@ block_iface::block_iface(block_ctrl_base *block_ptr)
     set_var_args[1] = expression::noctype; \
     ft->register_function( \
         "SET_VAR", \
-        boost::bind(&block_iface::_nocscript__var_set, this, _1), \
+        boost::bind(&block_iface::_nocscript__var_set, this, boost::placeholders::_1), \
         expression::TYPE_BOOL, \
         set_var_args \
     ); \
     ft->register_function( \
         "GET_"#typestr, \
-        boost::bind(&block_iface::_nocscript__var_get, this, _1), \
+        boost::bind(&block_iface::_nocscript__var_get, this, boost::placeholders::_1), \
         expression::noctype, \
         get_var_args \
     );
@@ -106,8 +106,8 @@ block_iface::block_iface(block_ctrl_base *block_ptr)
     // Create the parser
     _parser = parser::make(
         ft,
-        boost::bind(&block_iface::_nocscript__arg_get_type, this, _1),
-        boost::bind(&block_iface::_nocscript__arg_get_val,  this, _1)
+        boost::bind(&block_iface::_nocscript__arg_get_type, this, boost::placeholders::_1),
+        boost::bind(&block_iface::_nocscript__arg_get_val,  this, boost::placeholders::_1)
     );
 }
 

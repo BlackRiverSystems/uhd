@@ -178,7 +178,7 @@ bool check_locked_sensor(std::vector<std::string> sensor_names, const char* sens
 
     while (true) {
         if ((not first_lock_time.is_not_a_date_time()) and
-                (boost::get_system_time() > (first_lock_time + boost::posix_time::seconds(setup_time))))
+                (boost::get_system_time() > (first_lock_time + boost::posix_time::seconds((uint32_t)setup_time))))
         {
             std::cout << " locked." << std::endl;
             break;
@@ -192,7 +192,7 @@ bool check_locked_sensor(std::vector<std::string> sensor_names, const char* sens
         else {
             first_lock_time = boost::system_time();	//reset to 'not a date time'
 
-            if (boost::get_system_time() > (start + boost::posix_time::seconds(setup_time))){
+            if (boost::get_system_time() > (start + boost::posix_time::seconds((uint32_t)setup_time))){
                 std::cout << std::endl;
                 throw std::runtime_error(str(boost::format("timed out waiting for consecutive locks on sensor \"%s\"") % sensor_name));
             }
@@ -312,15 +312,15 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
     //set the antenna
     if (vm.count("ant")) usrp->set_rx_antenna(ant);
 
-    boost::this_thread::sleep(boost::posix_time::seconds(setup_time)); //allow for some setup time
+    boost::this_thread::sleep(boost::posix_time::seconds((uint32_t)setup_time)); //allow for some setup time
 
     //check Ref and LO Lock detect
     if (not vm.count("skip-lo")){
-        check_locked_sensor(usrp->get_rx_sensor_names(0), "lo_locked", boost::bind(&uhd::usrp::multi_usrp::get_rx_sensor, usrp, _1, 0), setup_time);
+        check_locked_sensor(usrp->get_rx_sensor_names(0), "lo_locked", boost::bind(&uhd::usrp::multi_usrp::get_rx_sensor, usrp, boost::placeholders::_1, 0), setup_time);
         if (ref == "mimo")
-            check_locked_sensor(usrp->get_mboard_sensor_names(0), "mimo_locked", boost::bind(&uhd::usrp::multi_usrp::get_mboard_sensor, usrp, _1, 0), setup_time);
+            check_locked_sensor(usrp->get_mboard_sensor_names(0), "mimo_locked", boost::bind(&uhd::usrp::multi_usrp::get_mboard_sensor, usrp, boost::placeholders::_1, 0), setup_time);
         if (ref == "external")
-            check_locked_sensor(usrp->get_mboard_sensor_names(0), "ref_locked", boost::bind(&uhd::usrp::multi_usrp::get_mboard_sensor, usrp, _1, 0), setup_time);
+            check_locked_sensor(usrp->get_mboard_sensor_names(0), "ref_locked", boost::bind(&uhd::usrp::multi_usrp::get_mboard_sensor, usrp, boost::placeholders::_1, 0), setup_time);
     }
 
     if (total_num_samps == 0){

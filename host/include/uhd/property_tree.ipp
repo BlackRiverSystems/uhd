@@ -30,13 +30,13 @@ namespace uhd{ namespace /*anon*/{
 
 template <typename T> class property_impl : public property<T>{
 public:
-    property_impl<T>(property_tree::coerce_mode_t mode) : _coerce_mode(mode){
+    property_impl(property_tree::coerce_mode_t mode) : _coerce_mode(mode){
         if (_coerce_mode == property_tree::AUTO_COERCE) {
             _coercer = DEFAULT_COERCER;
         }
     }
 
-    ~property_impl<T>(void){
+    ~property_impl(void){
         /* NOP */
     }
 

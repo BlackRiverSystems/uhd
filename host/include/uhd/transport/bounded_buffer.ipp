@@ -19,7 +19,7 @@
 #define INCLUDED_UHD_TRANSPORT_BOUNDED_BUFFER_IPP
 
 #include <uhd/config.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/circular_buffer.hpp>
@@ -98,7 +98,7 @@ namespace uhd{ namespace transport{
         UHD_INLINE bool pop_with_haste(elem_type &elem)
         {
             boost::mutex::scoped_lock lock(_mutex);
-            if (_buffer.empty()) 
+            if (_buffer.empty())
             {
                 return false;
             }
@@ -121,7 +121,7 @@ namespace uhd{ namespace transport{
         UHD_INLINE bool pop_with_timed_wait(elem_type &elem, double timeout)
         {
             boost::mutex::scoped_lock lock(_mutex);
-            if (_buffer.empty()) 
+            if (_buffer.empty())
             {
                 if (not _empty_cond.timed_wait(lock, to_time_dur(timeout),
                     _not_empty_fcn))

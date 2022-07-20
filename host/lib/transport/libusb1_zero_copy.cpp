@@ -24,7 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/thread/mutex.hpp>
@@ -241,7 +241,7 @@ public:
             UHD_ASSERT_THROW(lut != NULL);
 
             _mb_pool.push_back(boost::make_shared<libusb_zero_copy_mb>(
-                lut, this->get_frame_size(), boost::bind(&libusb_zero_copy_single::enqueue_buffer, this, _1), is_recv, name
+                lut, this->get_frame_size(), boost::bind(&libusb_zero_copy_single::enqueue_buffer, this, boost::placeholders::_1), is_recv, name
             ));
 
             libusb_fill_bulk_transfer(

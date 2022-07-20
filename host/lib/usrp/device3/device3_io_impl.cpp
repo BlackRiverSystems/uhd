@@ -612,7 +612,7 @@ rx_streamer::sptr device3_impl::get_rx_stream(const stream_args_t &args_)
         //bind requires a zero_copy_if::sptr to add a streamer->xport lifetime dependency
         my_streamer->set_xport_chan_get_buff(
             stream_i,
-            boost::bind(&zero_copy_if::get_recv_buff, xport.recv, _1),
+            boost::bind(&zero_copy_if::get_recv_buff, xport.recv, boost::placeholders::_1),
             true /*flush*/
         );
 
@@ -637,7 +637,7 @@ rx_streamer::sptr device3_impl::get_rx_stream(const stream_args_t &args_)
                 xport.send,
                 get_transport_endianness(mb_index),
                 fc_cache,
-                _1
+                boost::placeholders::_1
             ),
             fc_handle_window,
             true/*init*/
@@ -647,7 +647,7 @@ rx_streamer::sptr device3_impl::get_rx_stream(const stream_args_t &args_)
         //bind requires a shared pointer to add a streamer->framer lifetime dependency
         my_streamer->set_issue_stream_cmd(
             stream_i,
-            boost::bind(&uhd::rfnoc::source_block_ctrl_base::issue_stream_cmd, blk_ctrl, _1, block_port)
+            boost::bind(&uhd::rfnoc::source_block_ctrl_base::issue_stream_cmd, blk_ctrl, boost::placeholders::_1, block_port)
         );
 
         // Tell the streamer which SID is valid for this channel
@@ -887,17 +887,17 @@ tx_streamer::sptr device3_impl::get_tx_stream(const uhd::stream_args_t &args_)
 				my_streamer->_xport.recv,
 				(endianness == ENDIANNESS_BIG ? uhd::ntohx<uint32_t> : uhd::wtohx<uint32_t>),
 				(endianness == ENDIANNESS_BIG ? vrt::chdr::if_hdr_unpack_be : vrt::chdr::if_hdr_unpack_le),
-				 _1),
+				 boost::placeholders::_1),
             NULL);
 
         //Give the streamer a functor to get the send buffer
         my_streamer->set_xport_chan_get_buff(
             stream_i,
-            boost::bind(&zero_copy_if::get_send_buff, my_streamer->_xport.send, _1)
+            boost::bind(&zero_copy_if::get_send_buff, my_streamer->_xport.send, boost::placeholders::_1)
         );
         //Give the streamer a functor handled received async messages
         my_streamer->set_async_receiver(
-            boost::bind(&async_md_type::pop_with_timed_wait, async_md, _1, _2)
+            boost::bind(&async_md_type::pop_with_timed_wait, async_md, boost::placeholders::_1, boost::placeholders::_2)
         );
         my_streamer->set_xport_chan_sid(stream_i, true, xport.send_sid);
         // CHDR does not support trailers

@@ -20,7 +20,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <algorithm>
 #include <iostream>
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(test_add_funcs)
     expression_function::argtype_list_type add_int_args = boost::assign::list_of(expression::TYPE_INT)(expression::TYPE_INT);
     ft->register_function(
             "ADD_PLUS_2",
-            boost::bind(&add_plus2_int, _1),
+            boost::bind(&add_plus2_int, boost::placeholders::_1),
             expression::TYPE_INT,
             add_int_args
     );
@@ -154,13 +154,13 @@ BOOST_AUTO_TEST_CASE(test_conditionals)
     function_table::sptr ft = function_table::make();
     ft->register_function(
             "DUMMY",
-            boost::bind(&dummy_true, _1),
+            boost::bind(&dummy_true, boost::placeholders::_1),
             expression::TYPE_BOOL,
             no_args
     );
     ft->register_function(
             "DUMMY_F",
-            boost::bind(&dummy_false, _1),
+            boost::bind(&dummy_false, boost::placeholders::_1),
             expression::TYPE_BOOL,
             no_args
     );

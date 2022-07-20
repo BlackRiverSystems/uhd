@@ -19,7 +19,7 @@
 #include <uhd/utils/cast.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
 #include <boost/format.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
 #include <sstream>
@@ -326,7 +326,7 @@ class parser_impl : public parser
         bool r = lex::tokenize(
             first, last, // Iterators
             lexer_functor, // Lexer
-            boost::bind(grammar(), _1, boost::ref(P), boost::ref(next_valid_state)) // Function object
+            boost::bind(grammar(), boost::placeholders::_1, boost::ref(P), boost::ref(next_valid_state)) // Function object
         );
 
         // Check the parsing worked:

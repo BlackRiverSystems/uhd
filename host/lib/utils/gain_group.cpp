@@ -21,7 +21,7 @@
 #include <uhd/utils/algorithm.hpp>
 #include <uhd/exception.hpp>
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <algorithm>
 #include <vector>
 
@@ -126,7 +126,7 @@ public:
         }
         std::sort(
             indexes_step_size_dec.begin(), indexes_step_size_dec.end(),
-            boost::bind(&compare_by_step_size, _1, _2, all_fcns)
+            boost::bind(&compare_by_step_size, boost::placeholders::_1, boost::placeholders::_2, all_fcns)
         );
         UHD_ASSERT_THROW(
             all_fcns.at(indexes_step_size_dec.front()).get_range().step() >=

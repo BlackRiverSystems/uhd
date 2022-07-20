@@ -19,7 +19,7 @@
 #include "dsp_core_utils.hpp"
 #include <boost/math/special_functions/round.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <uhd/types/dict.hpp>
 
 using namespace uhd;
@@ -104,7 +104,7 @@ public:
         if (fe_conn.get_sampling_mode() == fe_connection_t::HETERODYNE) {
             //1. Remember the sign of the IF frequency.
             //   It will be discarded in the next step
-            int if_freq_sign = boost::math::sign(fe_conn.get_if_freq());
+            int if_freq_sign = std::signbit(fe_conn.get_if_freq()) ? -1 : 1;
             //2. Map IF frequency to the range [0, _adc_rate)
             double if_freq = std::abs(std::fmod(fe_conn.get_if_freq(), _adc_rate));
             //3. Map IF frequency to the range [-_adc_rate/2, _adc_rate/2)
@@ -150,15 +150,15 @@ public:
     void populate_subtree(uhd::property_tree::sptr subtree) {
         subtree->create<std::complex<double> >("dc_offset/value")
             .set(DEFAULT_DC_OFFSET_VALUE)
-            .set_coercer(boost::bind(&rx_frontend_core_3000::set_dc_offset, this, _1))
+            .set_coercer(boost::bind(&rx_frontend_core_3000::set_dc_offset, this, boost::placeholders::_1))
         ;
         subtree->create<bool>("dc_offset/enable")
             .set(DEFAULT_DC_OFFSET_ENABLE)
-            .add_coerced_subscriber(boost::bind(&rx_frontend_core_3000::set_dc_offset_auto, this, _1))
+            .add_coerced_subscriber(boost::bind(&rx_frontend_core_3000::set_dc_offset_auto, this, boost::placeholders::_1))
         ;
         subtree->create<std::complex<double> >("iq_balance/value")
             .set(DEFAULT_IQ_BALANCE_VALUE)
-            .add_coerced_subscriber(boost::bind(&rx_frontend_core_3000::set_iq_balance, this, _1))
+            .add_coerced_subscriber(boost::bind(&rx_frontend_core_3000::set_iq_balance, this, boost::placeholders::_1))
         ;
     }
 

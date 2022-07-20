@@ -17,7 +17,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <uhd/utils/gain_group.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/math/special_functions/round.hpp>
 #include <iostream>
 
@@ -80,12 +80,12 @@ static gain_group::sptr get_gain_group(size_t pri1 = 0, size_t pri2 = 0){
     //load gain group with function sets
     gain_fcns.get_range = boost::bind(&gain_element1::get_range, &g1);
     gain_fcns.get_value = boost::bind(&gain_element1::get_value, &g1);
-    gain_fcns.set_value = boost::bind(&gain_element1::set_value, &g1, _1);
+    gain_fcns.set_value = boost::bind(&gain_element1::set_value, &g1, boost::placeholders::_1);
     gg->register_fcns("g1", gain_fcns, pri1);
 
     gain_fcns.get_range = boost::bind(&gain_element2::get_range, &g2);
     gain_fcns.get_value = boost::bind(&gain_element2::get_value, &g2);
-    gain_fcns.set_value = boost::bind(&gain_element2::set_value, &g2, _1);
+    gain_fcns.set_value = boost::bind(&gain_element2::set_value, &g2, boost::placeholders::_1);
     gg->register_fcns("g2", gain_fcns, pri2);
 
     return gg;
