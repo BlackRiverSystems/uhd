@@ -103,7 +103,7 @@
 namespace uhd {
 
 template<typename T> UHD_INLINE T ntohx(T num){
-    #ifdef BOOST_ENDIAN_BIG_BYTE
+    #ifdef __BIG_ENDIAN__
         return num;
     #else
         return uhd::byteswap(num);
@@ -111,7 +111,7 @@ template<typename T> UHD_INLINE T ntohx(T num){
 }
 
 template<typename T> UHD_INLINE T htonx(T num){
-    #ifdef BOOST_ENDIAN_BIG_BYTE
+    #ifdef __BIG_ENDIAN__
         return num;
     #else
         return uhd::byteswap(num);
@@ -119,7 +119,7 @@ template<typename T> UHD_INLINE T htonx(T num){
 }
 
 template<typename T> UHD_INLINE T wtohx(T num){
-    #ifdef BOOST_ENDIAN_BIG_BYTE
+    #ifdef __BIG_ENDIAN__
         return uhd::byteswap(num);
     #else
         return num;
@@ -127,7 +127,7 @@ template<typename T> UHD_INLINE T wtohx(T num){
 }
 
 template<typename T> UHD_INLINE T htowx(T num){
-    #ifdef BOOST_ENDIAN_BIG_BYTE
+    #ifdef __BIG_ENDIAN__
         return uhd::byteswap(num);
     #else
         return num;
