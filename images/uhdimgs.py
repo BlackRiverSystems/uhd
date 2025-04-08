@@ -78,7 +78,7 @@ def get_total_md5(img_dir):
                 sys.stdout.flus()
             for dirname in dirnames:
                 _update_md5_for_dir_recursive(os.path.join(root, dirname), md5_obj)
-    md5 = hashlib.md5()
+    md5 = hashlib.sha256()
     _update_md5_for_dir_recursive(img_dir, md5)
     print ""
     return md5.hexdigest()
@@ -87,7 +87,7 @@ def md5_checksum(filePath):
     """ Return MD5 checksum of a single file. """
     try:
         with open(filePath, 'rb') as fh:
-            m = hashlib.md5()
+            m = hashlib.sha256()
             while True:
                 data = fh.read(_DEFAULT_BUFFER_SIZE)
                 if not data:
