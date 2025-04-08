@@ -40,7 +40,7 @@ _CONTACT                  = "support@ettus.com"
 def md5Checksum(filePath):
     try:
         with open(filePath, 'rb') as fh:
-            m = hashlib.md5()
+            m = hashlib.sha256()
             while True:
                 data = fh.read(_DEFAULT_BUFFER_SIZE)
                 if not data:
