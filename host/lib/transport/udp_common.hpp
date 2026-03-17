@@ -93,15 +93,16 @@ namespace uhd{ namespace transport{
         if (ret > 0) {
             // Check revents for actual readability vs. error conditions
             if (pfd_read.revents & POLLNVAL) {
-                throw uhd::io_error("poll() returned POLLNVAL: invalid socket fd");
+                return false;
+                // throw uhd::io_error("poll() returned POLLNVAL: invalid socket fd");
             }
             if (pfd_read.revents & (POLLERR | POLLHUP)) {
                 // Socket error or peer hangup — caller's recv() will get
                 // the actual error, so still return true to let it proceed.
                 // Alternatively, you could throw here for stricter handling.
-                UHD_LOG_WARNING("UDP",
-                    "poll() indicated socket error/hangup (revents=0x"
-                    << std::hex << pfd_read.revents << ")");
+                // UHD_LOG_WARNING("UDP",
+                //     "poll() indicated socket error/hangup (revents=0x"
+                //     << std::hex << pfd_read.revents << ")");
                 return true;
             }
             if (pfd_read.revents & POLLIN) {
@@ -122,8 +123,9 @@ namespace uhd{ namespace transport{
             // retrying with the original value is acceptable.
             continue;
         }
-        throw uhd::io_error(str(
-            boost::format("poll() failed: %s") % std::strerror(errno)));
+        // throw uhd::io_error(str(
+        //     boost::format("poll() failed: %s") % std::strerror(errno)));
+        return false;
     }
 #endif
     }
