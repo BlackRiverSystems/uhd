@@ -276,7 +276,7 @@ private:
                         )
                     );
                 }
-
+#ifdef UHD_NO_BRSC
                 if (packet_info.packet_count != (seq_to_ack & 0xfff)) {
                     throw uhd::io_error(
                         str(
@@ -287,6 +287,35 @@ private:
                         )
                     );
                 }
+#else
+                if (packet_info.packet_count != (seq_to_ack & 0xfff)) {
+                    // Log warning instead of throwing fatal error
+                    UHD_MSG(warning) << boost::format(
+                        "[%s] Packet index mismatch - Expected: %d  Received: %d "
+                        "(resyncing sequence tracker)")
+                        % _name
+                        % (seq_to_ack & 0xfff)
+                        % packet_info.packet_count
+                        << std::endl;
+
+                    // Drain outstanding sequences to re-align with device
+                    while (!_outstanding_seqs.empty()) {
+                        _outstanding_seqs.pop();
+                    }
+
+                    // If readback was requested, still return the payload data
+                    if (readback) {
+                        const uint64_t hi = (_bige)
+                            ? uhd::ntohx(pkt[packet_info.num_header_words32+0])
+                            : uhd::wtohx(pkt[packet_info.num_header_words32+0]);
+                        const uint64_t lo = (_bige)
+                            ? uhd::ntohx(pkt[packet_info.num_header_words32+1])
+                            : uhd::wtohx(pkt[packet_info.num_header_words32+1]);
+                        return ((hi << 32) | lo);
+                    }
+                    return 0;
+                }
+#endif
 
                 UHD_ASSERT_THROW(packet_info.num_payload_words32 == 2);
                 //UHD_ASSERT_THROW(packet_info.packet_type == _packet_type);

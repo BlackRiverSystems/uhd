@@ -57,7 +57,7 @@ namespace uhd{ namespace transport{
 
         //call select with timeout on receive socket
         return TEMP_FAILURE_RETRY(::select(sock_fd+1, &rset, NULL, NULL, &tv)) > 0;
-#else
+#elif UHD_NO_BRSC
         //calculate the total timeout in milliseconds (from seconds)
         int total_timeout = int(timeout*1000);
 
@@ -67,6 +67,64 @@ namespace uhd{ namespace transport{
 
         //call poll with timeout on receive socket
         return ::poll(&pfd_read, 1, total_timeout) > 0;
+#else
+    // ---- POSIX (Linux, macOS, BSD): use poll() ----
+
+    // Clamp and convert to milliseconds for poll()
+    int timeout_ms;
+    if (timeout <= 0.0) {
+        timeout_ms = 0;
+    } else if (timeout > 2147483.0) {
+        timeout_ms = 2147483647;  // INT32_MAX, effectively infinite
+    } else {
+        timeout_ms = static_cast<int>(timeout * 1000.0 + 0.5); // round
+        if (timeout_ms == 0) timeout_ms = 1; // ensure at least 1ms if timeout > 0
+    }
+
+    pollfd pfd_read;
+    pfd_read.fd      = sock_fd;
+    pfd_read.events  = POLLIN;
+    pfd_read.revents = 0;
+
+    // Retry on EINTR
+    while (true) {
+        const int ret = ::poll(&pfd_read, 1, timeout_ms);
+
+        if (ret > 0) {
+            // Check revents for actual readability vs. error conditions
+            if (pfd_read.revents & POLLNVAL) {
+                throw uhd::io_error("poll() returned POLLNVAL: invalid socket fd");
+            }
+            if (pfd_read.revents & (POLLERR | POLLHUP)) {
+                // Socket error or peer hangup — caller's recv() will get
+                // the actual error, so still return true to let it proceed.
+                // Alternatively, you could throw here for stricter handling.
+                UHD_LOG_WARNING("UDP",
+                    "poll() indicated socket error/hangup (revents=0x"
+                    << std::hex << pfd_read.revents << ")");
+                return true;
+            }
+            if (pfd_read.revents & POLLIN) {
+                return true;     // data is ready
+            }
+            // Unexpected revents combination — treat as not ready
+            return false;
+        }
+
+        if (ret == 0) {
+            return false;        // timeout
+        }
+
+        // ret < 0: error
+        if (errno == EINTR) {
+            // Interrupted by signal. Ideally we'd subtract elapsed time
+            // from timeout_ms, but for short timeouts (typical in UHD)
+            // retrying with the original value is acceptable.
+            continue;
+        }
+        throw uhd::io_error(str(
+            boost::format("poll() failed: %s") % std::strerror(errno)));
+    }
 #endif
     }
 
