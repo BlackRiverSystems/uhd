@@ -9,13 +9,14 @@ __Chapters__
 \li **Software Installation**: Explains installation of UHD using binary installers or from source code.
 \li **UHD Driver Usage**: Explains certain features of the UHD driver and how to use them.
 \li **UHD Driver API**: Provides an overview over the different APIs and their availability in different programming languages.
-\li **RFNoC**: Explains how to develop custom FPGA designs using the RFNoC framework. 
 \li **FPGA Manual**: Explains how to build FPGA bitfiles for different USRP generations.
+\li **RFNoC**: Explains how to develop custom FPGA designs using the RFNoC framework.
+\li **App Notes**: These are tutorial-like application notes that show how to solve specific problems.
 \li **C++ API Reference**:  Provides Descriptions of the C++ API, sorted by classes, files and namespaces.
 
-__Searching this manual__ 
-\li A search bar is available at the top right. This search only works on C++ API components. 
-\li The search on the bottom right at <a href="https://uhd.readthedocs.io/">readthedocs.io</a> provides full text search capabilities for this manual. 
+__Searching this manual__
+\li A search bar is available at the top right. This search only works on C++ API components.
+\li The search on the bottom right at <a href="https://uhd.readthedocs.io/">readthedocs.io</a> provides full text search capabilities for this manual.
 
 */
 // vim:ft=doxygen:
