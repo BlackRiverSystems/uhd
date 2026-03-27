@@ -18,6 +18,7 @@
 #include <uhd/types/wb_iface.hpp>
 #include "x300_fw_common.h"
 #include <uhd/transport/udp_simple.hpp>
+#include <uhd/usrp/x300_fw_error_cb.hpp>
 #include <uhd/utils/byteswap.hpp>
 #include <uhd/utils/msg.hpp>
 #include <uhd/exception.hpp>
@@ -28,9 +29,23 @@
 #include "x300_regs.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp>
+#include <functional>
+#include <mutex>
+#include <string>
 
 using namespace uhd;
 using namespace uhd::niusrprio;
+
+namespace {
+    std::function<void(const std::string&)> s_fw_error_cb;
+    std::mutex s_fw_error_cb_mutex;
+}
+
+UHD_API void x300_set_fw_error_callback(const std::function<void(const std::string&)>& cb)
+{
+    std::lock_guard<std::mutex> lock(s_fw_error_cb_mutex);
+    s_fw_error_cb = cb;
+}
 
 class x300_ctrl_iface : public wb_iface
 {
@@ -62,7 +77,14 @@ public:
                 std::string error_msg = str(boost::format(
                     "x300 fw communication failure #%u\n%s") % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
-                if (i == num_retries) throw uhd::io_error(error_msg);
+                if (i == num_retries)
+                {
+                    {
+                        std::lock_guard<std::mutex> cb_lock(s_fw_error_cb_mutex);
+                        if (s_fw_error_cb) s_fw_error_cb(error_msg);
+                    }
+                    throw uhd::io_error(error_msg);
+                }
             }
         }
     }
@@ -82,7 +104,14 @@ public:
                 std::string error_msg = str(boost::format(
                     "x300 fw communication failure #%u\n%s") % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
-                if (i == num_retries) throw uhd::io_error(error_msg);
+                if (i == num_retries)
+                {
+                    {
+                        std::lock_guard<std::mutex> cb_lock(s_fw_error_cb_mutex);
+                        if (s_fw_error_cb) s_fw_error_cb(error_msg);
+                    }
+                    throw uhd::io_error(error_msg);
+                }
             }
         }
         return 0;
