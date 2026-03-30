@@ -18,7 +18,7 @@
 #include <uhd/types/wb_iface.hpp>
 #include "x300_fw_common.h"
 #include <uhd/transport/udp_simple.hpp>
-#include <uhd/usrp/x300_fw_error_cb.hpp>
+#include <uhd/usrp/x300_fw_api.hpp>
 #include <uhd/utils/byteswap.hpp>
 #include <uhd/utils/msg.hpp>
 #include <uhd/exception.hpp>
@@ -39,12 +39,18 @@ using namespace uhd::niusrprio;
 namespace {
     std::function<void(const std::string&)> s_fw_error_cb;
     std::mutex s_fw_error_cb_mutex;
+    std::atomic<size_t> s_fw_retry_count{3};
 }
 
 UHD_API void x300_set_fw_error_callback(const std::function<void(const std::string&)>& cb)
 {
     std::lock_guard<std::mutex> lock(s_fw_error_cb_mutex);
     s_fw_error_cb = cb;
+}
+
+UHD_API void x300_set_fw_retry_count(size_t count)
+{
+    s_fw_retry_count = count;
 }
 
 class x300_ctrl_iface : public wb_iface
@@ -65,7 +71,7 @@ public:
 
     void poke32(const wb_addr_type addr, const uint32_t data)
     {
-        for (size_t i = 1; i <= num_retries; i++)
+        for (size_t i = 1; i <= s_fw_retry_count.load(); i++)
         {
             boost::mutex::scoped_lock lock(reg_access);
             try
@@ -77,7 +83,7 @@ public:
                 std::string error_msg = str(boost::format(
                     "x300 fw communication failure #%u\n%s") % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
-                if (i == num_retries)
+                if (i == s_fw_retry_count.load())
                 {
                     {
                         std::lock_guard<std::mutex> cb_lock(s_fw_error_cb_mutex);
@@ -91,7 +97,7 @@ public:
 
     uint32_t peek32(const wb_addr_type addr)
     {
-        for (size_t i = 1; i <= num_retries; i++)
+        for (size_t i = 1; i <= s_fw_retry_count.load(); i++)
         {
             boost::mutex::scoped_lock lock(reg_access);
             try
@@ -104,7 +110,7 @@ public:
                 std::string error_msg = str(boost::format(
                     "x300 fw communication failure #%u\n%s") % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
-                if (i == num_retries)
+                if (i == s_fw_retry_count.load())
                 {
                     {
                         std::lock_guard<std::mutex> cb_lock(s_fw_error_cb_mutex);
