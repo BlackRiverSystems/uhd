@@ -33,6 +33,7 @@ UHD_INSTALL(FILES
 
     ### interfaces ###
     multi_usrp.hpp
+    x300_fw_api.hpp
 
     DESTINATION ${INCLUDE_DIR}/uhd/usrp
     COMPONENT headers
