@@ -26,6 +26,7 @@ args:
 # These variables may be used in the steps below
 variables:
   module_name: "${ args.module_name }"
+  module_name_id: "${ args.module_name.replace('-', '_') }"
   module_name_full: "${ args.module_name if args.module_name.startswith('rfnoc-') else 'rfnoc-' + args.module_name }"
 
 steps:
@@ -41,6 +42,14 @@ steps:
   - chdir:
       dir: "${ CWD }/${ module_name_full }"
   - search_and_replace:
+      files:
+        - python/pyrfnoc-newmod.cpp
+        - python/setup.py.in
+        - python/CMakeLists.txt
+        - python/rfnoc_newmod/__init__.py
+      pattern: 'rfnoc_newmod'
+      repl: "rfnoc_${ module_name_id }"
+  - search_and_replace:
       glob: "**"
       pattern: 'newmod'
       repl: "${ module_name }"
@@ -48,7 +57,7 @@ steps:
   - search_and_replace:
       glob: "**"
       pattern: 'NEWMOD'
-      repl: "${ module_name.upper() }"
+      repl: "${ module_name.upper().replace('-', '_') }"
       quiet: true
   - search_and_replace:
       glob: README.md

@@ -37,11 +37,10 @@ add_library(rfnoc-gain SHARED
     ${rfnoc_gain_sources}
 )
 target_link_libraries(rfnoc-gain
-    ${UHD_LIBRARIES}
-    ${Boost_LIBRARIES}
+    UHD::uhd
 )
 set_target_properties(rfnoc-gain
-    PROPERTIES DEFINE_SYMBOL "RFNOC_GAIN_EXPORTS")
+    PROPERTIES DEFINE_SYMBOL "RFNOC_GAIN_DLL_EXPORTS")
 
 file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/lib/rfnoc-gain CONTENT "$<TARGET_FILE_NAME:rfnoc-gain>\n")
 
