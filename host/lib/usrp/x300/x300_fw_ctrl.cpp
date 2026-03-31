@@ -81,7 +81,7 @@ public:
             catch(const uhd::io_error &ex)
             {
                 std::string error_msg = str(boost::format(
-                    "x300 fw communication failure #%u\n%s") % i % ex.what());
+                    "%sx300 fw communication failure #%u\n%s") % addr_prefix % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
                 if (i == s_fw_retry_count.load())
                 {
@@ -108,7 +108,7 @@ public:
             catch(const uhd::io_error &ex)
             {
                 std::string error_msg = str(boost::format(
-                    "x300 fw communication failure #%u\n%s") % i % ex.what());
+                    "%sx300 fw communication failure #%u\n%s") % addr_prefix % i % ex.what());
                 if (errors) UHD_MSG(error) << error_msg << std::endl;
                 if (i == s_fw_retry_count.load())
                 {
@@ -125,6 +125,7 @@ public:
 
 protected:
     bool errors;
+    std::string addr_prefix;
 
     virtual void __poke32(const wb_addr_type addr, const uint32_t data) = 0;
     virtual uint32_t __peek32(const wb_addr_type addr) = 0;
@@ -143,6 +144,7 @@ public:
     x300_ctrl_iface_enet(uhd::transport::udp_simple::sptr udp, bool enable_errors = true):
         x300_ctrl_iface(enable_errors), udp(udp), seq(0)
     {
+        addr_prefix = "[" + udp->get_send_addr() + "] ";
         try
         {
             this->peek32(0);

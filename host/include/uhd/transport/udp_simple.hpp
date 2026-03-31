@@ -93,6 +93,9 @@ public:
      * Only use this with the broadcast socket.
      */
     virtual std::string get_recv_addr(void) = 0;
+
+    //! Get the destination IP address (the radio's address)
+    virtual std::string get_send_addr(void) = 0;
 };
 
 }} //namespace
