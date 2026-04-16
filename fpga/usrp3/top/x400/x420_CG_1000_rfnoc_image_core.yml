@@ -6,7 +6,7 @@ copyright: >-                             # Copyright information used in file h
 license: >-                               # License information used in file headers
   SPDX-License-Identifier: LGPL-3.0-or-later
 version: '1.0'                            # File version
-chdr_width: 256                           # Bit width of the CHDR bus for this image
+chdr_width: 512                           # Bit width of the CHDR bus for this image
 device: 'x420'                            # USRP type
 image_core_name: 'usrp_x420_fpga_CG_1000' # Name to use for the generated output files
 default_target: 'X420'                    # Default make target
@@ -26,11 +26,11 @@ stream_endpoints:
   ep0:                                  # Stream endpoint name
     ctrl: True                          # Endpoint passes control traffic
     data: True                          # Endpoint passes data traffic
-    buff_size_bytes: 2097152            # Ingress buffer size for data
+    buff_size_bytes: 1048576            # Ingress buffer size for data
   ep1:
     ctrl: False
     data: True
-    buff_size_bytes: 2097152
+    buff_size_bytes: 1048576
   ep2:
     ctrl: False
     data: True
