@@ -680,6 +680,14 @@ class HBXCompensator:
                 f"Waveform size {waveform_num_bytes} bytes is not aligned with the word size "
                 f"{txs[channels[0]].word_size} bytes. Please adjust the number of samples."
             )
+
+        # The DRAM on the device is operating at 4k boundaries. Therefore, the
+        # waveform start addresses are rounded up to the next multiple of 4096
+        # bytes to ensure proper alignment and avoid potential issues during
+        # playback.
+        alignment = 4096
+        waveform_num_bytes = ((waveform_num_bytes + alignment - 1) // alignment) * alignment
+
         # check the total required memory for all waveforms against the
         # available memory on the device
         if self._args.tx:
