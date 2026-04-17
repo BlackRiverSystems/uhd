@@ -36,14 +36,14 @@ def parse_args():
         "--sample_rate",
         type=float,
         default=1250e6,
-        help="Sample rate in Hz (default: 1.25GS/s)",
+        help="Sample rate in Hz (default: 1.25 GS/s)",
     )
     parser.add_argument(
         "-n",
         "--num_samples",
         type=int,
         default=int(100e3),
-        help="Number of samples (default: 100.000)",
+        help="Number of samples (default: 100k samples)",
     )
     parser.add_argument(
         "--num-coeffs",
@@ -123,7 +123,7 @@ def parse_args():
         "--rf_frequency_step",
         type=float,
         default=FREQUENCY_SWEEP_DEFAULTS["rf_frequency_step"],
-        help="Frequency step of the frequency sweep in Hz (default: 100MHz)",
+        help="Frequency step of the frequency sweep in Hz (default: 100 MHz)",
     )
     parser.add_argument(
         "-bfs",
