@@ -1,4 +1,4 @@
-# Adding Custom Clocks to RFNoC Designs {#appnote_mmcm_custom_clocks}
+# Adding Custom Clocks to RFNoC Designs {#appnote_custom_clocks}
 
 This application note explains how to add custom clock generation modules to
 RFNoC designs. We'll walk through a complete example that demonstrates creating
