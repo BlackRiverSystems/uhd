@@ -6,7 +6,7 @@ x4xx_x410_fpga_default          uhd-a95c203       x4xx/uhd-a95c203/x4xx_x410_fpg
 x4xx_x410_cpld_default          uhd-6fd9f37       x4xx/uhd-6fd9f37/x4xx_x410_cpld_default-g6fd9f37.zip       74e09bedda84105258484217d4dbf68860ce2079d27cf8352952fe8e4d727e93
 x4xx_zbx_cpld_default           uhd-8d022b3       x4xx/uhd-8d022b3/x4xx_zbx_cpld_default-g8d022b3.zip        95993c736d48e22cbdb453a606189378a420f62280b4fb387cbe0272b146044b
 # X420-Series
-x4xx_x420_fpga_default          uhd-a95c203       x4xx/uhd-a95c203/x4xx_x420_fpga_default-ga95c203.zip       aa83b732c0249b9f630dc41c4db4e4cc766b4611524291ecd2a0dd01977b58a9
+x4xx_x420_fpga_default          uhd-4a045a7       x4xx/uhd-4a045a7/x4xx_x420_fpga_default-g4a045a7.zip       2a316966f191272f541f5d0804d2b3f9f0c5ae9b8fe3debd5a57974000d8d1d8
 # X440-Series
 x4xx_x440_fpga_default          uhd-a95c203       x4xx/uhd-a95c203/x4xx_x440_fpga_default-ga95c203.zip       49e6f995eadcf63e74695703c70746485bcd20c113a996e8d4044aba57059be2
 x4xx_x440_cpld_default          uhd-f5bb3e0       x4xx/uhd-f5bb3e0/x4xx_x440_cpld_default-gf5bb3e0.zip       1c929c125b868bac47e027e4351ca8f3cbafc8ea517fff24693a1801955eb4db
