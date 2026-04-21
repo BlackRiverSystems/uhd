@@ -418,8 +418,10 @@ class X420Calibrator(USRPCalibratorBase):
     """X420/HBX Calibration."""
 
     mboard_ids = ("x420",)
+    # X420 max input level is 0 dBm and it is required for a proper cal.
+    max_input_power = 0
     # Choosing 1250 MHz: In some bitfiles we don't have resamplers, so we need
-    # to choose the default master clock rate. In the power cal utility can
+    # to choose the default master clock rate. The power cal utility can
     # override this to a lower rate if needed.
     default_rate = 1.25e9
     min_freq = 10e6
