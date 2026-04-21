@@ -486,9 +486,7 @@ class HBXCompensator:
                     f"number up to {self.channels_per_mb * self._num_mbs - 1} available."
                 )
             # Prepare LO RCP
-            mboard_num = self._args.lo_channel // self.channels_per_mb
-            radio_idx = self._args.lo_channel % self.channels_per_mb // self.channels_per_radio
-            channel_idx = self._args.lo_channel % self.channels_per_mb % self.channels_per_radio
+            mboard_num, radio_idx, channel_idx = self._get_channel_indices(self._args.lo_channel)
             self._lo_rcp = (
                 uhd.rfnoc.RadioControl(self._graph.get_block(f"{mboard_num}/Radio#{radio_idx}")),
                 channel_idx,
@@ -497,9 +495,22 @@ class HBXCompensator:
             self._lo_rcp[0].set_rx_lo_export_enabled(True, "HBX_LO", self._lo_rcp[1])
             print(f"Using LO from {mboard_num}/Radio#{radio_idx}/Channel#{channel_idx}.")
 
+    def _get_channel_indices(self, ch):
+        """Convert a channel number to motherboard, radio, and channel indices.
+
+        Args:
+            ch: Overall channel number
+
+        Returns:
+            Tuple of (mboard_num, radio_idx, channel_idx)
+        """
+        mboard_num = ch // self.channels_per_mb
+        radio_idx = ch % self.channels_per_mb // self.channels_per_radio
+        channel_idx = ch % self.channels_per_mb % self.channels_per_radio
+        return mboard_num, radio_idx, channel_idx
+
     def run_measurement(self):
         """Run the IQ impairment compensation measurement."""
-        # Preparing the DRAM utils, exact channel will be chosen later.
         for idx, channels in enumerate(self.ch_map):
             tx = {}
             rx = {}
@@ -507,13 +518,15 @@ class HBXCompensator:
             # use one replay block for TX and one for RX without collision.
             print("Collecting basic information...")
             for ch in channels:
-                board_num = ch // self.channels_per_mb
+                # Preparing the DRAM utils for the current channel
+                board_num, radio_idx, channel_idx = self._get_channel_indices(ch)
+                radio_chan = f"{board_num}/Radio#{radio_idx}:{channel_idx}"
                 tx[ch] = dram_utils.DramTransmitter(
-                    self._graph, [f"{board_num}/Radio#0"], f"{board_num}/Replay#0"
+                    self._graph, [radio_chan], f"{board_num}/Replay#0"
                 )
                 rx[ch] = dram_utils.DramReceiver(
                     self._graph,
-                    [f"{board_num}/Radio#0"],
+                    [radio_chan],
                     f"{board_num}/Replay#1",
                     throttle="1.0",
                 )
@@ -568,15 +581,11 @@ class HBXCompensator:
 
         radio_channel_pairs = {}
         for ch in channels:
-            mboard_num = ch // self.channels_per_mb
-            radio_idx = ch % self.channels_per_mb // self.channels_per_radio
-            channel_idx = ch % self.channels_per_mb % self.channels_per_radio
+            mboard_num, radio_idx, channel_idx = self._get_channel_indices(ch)
             print(
                 f"Working on {mboard_num}/Radio#{radio_idx}/Channel#{channel_idx}, "
                 f"overall channel {ch}..."
             )
-            tx[ch].reconnect(graph, [f"{mboard_num}/Radio#{radio_idx}:{channel_idx}"])
-            rx[ch].reconnect(graph, [f"{mboard_num}/Radio#{radio_idx}:{channel_idx}"])
 
             rcp = tx[ch].radio_chan_pairs[0]
             self._prepare_radio(rcp[0], rcp[1])
