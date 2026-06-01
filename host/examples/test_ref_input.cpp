@@ -3,7 +3,7 @@
 // Reports an error if unable to lock.
 //
 
-#include <uhd/utils/thread_priority.hpp>
+#include <uhd/utils/thread.hpp>
 #include <uhd/utils/safe_main.hpp>
 #include <uhd/usrp/multi_usrp.hpp>
 #include <uhd/exception.hpp>
@@ -11,7 +11,6 @@
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
 #include <iostream>
-#include <complex>
 
 namespace po = boost::program_options;
 
