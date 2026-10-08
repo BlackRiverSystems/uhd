@@ -159,19 +159,18 @@ private:
             } else {
                 // FIXME Move lock back to lock_guard once have threaded_io_service
                 lock.unlock();
-                // Be a good citizen and yield if no packet is processed
-                static const size_t MIN_DUR = 1;
-                boost::this_thread::sleep_for(boost::chrono::nanoseconds(MIN_DUR));
-                // We call sleep(MIN_DUR) above instead of yield() to ensure that we
-                // relinquish the current scheduler time slot.
-                // yield() is a hint to the scheduler to end the time
-                // slice early and schedule in another thread that is ready to run.
-                // However in most situations, there will be no other thread and
-                // this thread will continue to run which will rail a CPU core.
-                // We call sleep(MIN_DUR=1) instead which will sleep for a minimum
-                // time. Ideally we would like to use boost::chrono::.*seconds::min()
-                // but that is bound to 0, which causes the sleep_for call to be a
-                // no-op and thus useless to actually force a sleep.
+                // Be a good citizen and yield if no packet is processed.
+                // BRSC: boost::this_thread::sleep_for(1ns) waits on a condition
+                // variable whose deadline has already passed, so it returns
+                // without blocking and this thread rails a core per device (seen
+                // on X310 + DPDK: ~95% CPU, ~0 voluntary context switches).
+                // std::this_thread::sleep_for is a real nanosleep; with the
+                // default 50us timer slack for SCHED_OTHER threads that bounds
+                // the added control-response latency to roughly 60us.
+                static const auto MIN_DUR = std::chrono::microseconds(10);
+                std::this_thread::sleep_for(MIN_DUR);
+                // A sleep rather than yield(): yield() is only a hint, and with no
+                // other runnable thread this one would keep running and rail a core.
             }
         }
     }
