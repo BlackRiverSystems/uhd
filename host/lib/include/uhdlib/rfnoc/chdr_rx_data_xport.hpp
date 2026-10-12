@@ -15,7 +15,9 @@
 #include <uhdlib/rfnoc/rx_flow_ctrl_state.hpp>
 #include <uhdlib/transport/io_service.hpp>
 #include <uhdlib/transport/link_if.hpp>
+#include <functional>
 #include <memory>
+#include <optional>
 
 namespace uhd { namespace rfnoc {
 
@@ -237,7 +239,15 @@ public:
         }
 
         auto info      = _read_data_packet_info(buff);
-        bool seq_error = _is_out_of_sequence(std::get<1>(info));
+        bool seq_error = false;
+        if (_resync_seq) {
+            // BRSC: the SEP numbered the packets it sent to the remote
+            // destination too, so the gap is expected
+            _resync_seq   = false;
+            _data_seq_num = std::get<1>(info) + 1;
+        } else {
+            seq_error = _is_out_of_sequence(std::get<1>(info));
+        }
 
         return std::make_tuple(std::move(buff), std::get<0>(info), seq_error);
     }
@@ -250,6 +260,55 @@ public:
     void release_recv_buff(typename buff_t::uptr buff)
     {
         _recv_io->release_recv_buff(std::move(buff));
+    }
+
+    //! BRSC: Function that routes the device's data for this xport to the
+    // remote destination (true) or back to this xport (false)
+    using route_switch_fn_t = std::function<void(bool remote)>;
+
+    //! BRSC: Install the route switch (see uhd/rfnoc/rx_destination.hpp)
+    void set_route_switch_fn(route_switch_fn_t route_switch_fn)
+    {
+        _route_switch_fn = std::move(route_switch_fn);
+    }
+
+    //! BRSC: True if this xport's data can be routed to a remote destination
+    bool has_route_switch() const
+    {
+        return bool(_route_switch_fn);
+    }
+
+    /*! BRSC: Route the data to the remote destination or back to this xport
+     *
+     * Must be called from the thread that calls get_recv_buff(), while the
+     * stream is idle. If the switch throws, the destination is unknown (the
+     * write may have landed without its reply) and the next call writes again.
+     *
+     * \throws uhd::not_implemented_error if no route switch was installed
+     */
+    void set_remote_destination(const bool remote)
+    {
+        if (!_route_switch_fn) {
+            throw uhd::not_implemented_error(
+                "RX stream was not created with a remote destination (alt_dest_addr)");
+        }
+        if (_remote == remote) {
+            return;
+        }
+        if (!remote) {
+            // Even a failed attempt may have brought the data back
+            _resync_seq = true;
+        }
+        _remote.reset();
+        _route_switch_fn(remote);
+        _remote = remote;
+    }
+
+    //! BRSC: True if the data currently goes to the remote destination, empty
+    // if unknown after a failed switch
+    std::optional<bool> get_remote_destination() const
+    {
+        return _remote;
     }
 
 private:
@@ -447,6 +506,13 @@ private:
 
     // Disconnect callback
     disconnect_callback_t _disconnect;
+
+    // BRSC: remote destination switch state
+    route_switch_fn_t _route_switch_fn;
+    // Streams start out routed to this xport
+    std::optional<bool> _remote = false;
+    // Accept the sequence number of the next data packet as the new reference
+    bool _resync_seq = false;
 };
 
 }} // namespace uhd::rfnoc

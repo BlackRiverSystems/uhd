@@ -11,11 +11,30 @@
 #include <uhdlib/rfnoc/rfnoc_common.hpp>
 #include <uhdlib/transport/io_service.hpp>
 #include <uhdlib/transport/link_if.hpp>
+#include <limits>
 
 using namespace uhd;
 using namespace uhd::rfnoc;
 using namespace uhd::rfnoc::detail;
 using namespace uhd::transport;
+
+namespace {
+
+// BRSC: A SEP configured with enable_fc=0 reports an FC frequency of {0, 0}.
+// rx_flow_ctrl_state treats that as "a response is due after every packet", so
+// the I/O thread would send one STRS per received packet, which the SEP ignores,
+// and send_strs() throws inside the I/O thread whenever no send frame is free.
+// Use frequencies that are never reached instead.
+stream_buff_params_t get_rx_fc_resp_freq(const stream_buff_params_t& fc_freq)
+{
+    if (fc_freq.bytes == 0 && fc_freq.packets == 0) {
+        return {
+            std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint32_t>::max()};
+    }
+    return fc_freq;
+}
+
+} // namespace
 
 rx_flow_ctrl_sender::rx_flow_ctrl_sender(
     const chdr::chdr_packet_factory& pkt_factory, const sep_id_pair_t sep_ids)
@@ -39,7 +58,7 @@ chdr_rx_data_xport::chdr_rx_data_xport(uhd::transport::io_service::sptr io_srv,
     const size_t num_recv_frames,
     const fc_params_t& fc_params,
     disconnect_callback_t disconnect)
-    : _fc_state(epids, fc_params.freq)
+    : _fc_state(epids, get_rx_fc_resp_freq(fc_params.freq))
     , _mtu(recv_link->get_recv_frame_size())
     , _fc_sender(pkt_factory, epids)
     , _epid(epids.second)

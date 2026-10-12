@@ -6,6 +6,7 @@
 
 #include <uhd/rfnoc/defaults.hpp>
 #include <uhd/rfnoc/node_accessor.hpp>
+#include <uhd/rfnoc/rx_destination.hpp>
 #include <uhdlib/rfnoc/rfnoc_rx_streamer.hpp>
 #include <atomic>
 #include <chrono>
@@ -26,6 +27,7 @@ rfnoc_rx_streamer::rfnoc_rx_streamer(const size_t num_chans,
     , _unique_id(STREAMER_ID + "#" + std::to_string(streamer_inst_ctr++))
     , _stream_args(stream_args)
     , _disconnect_cb(disconnect_cb)
+    , _rx_xports(num_chans, nullptr)
 {
     set_overrun_handler([this]() { this->_handle_overrun(); });
 
@@ -191,9 +193,11 @@ void rfnoc_rx_streamer::connect_channel(
 {
     UHD_ASSERT_THROW(channel < _mtu_in.size());
     // Stash away the MTU before we lose access to xports
-    const size_t xport_mtu = xport->get_mtu();
+    const size_t xport_mtu        = xport->get_mtu();
+    chdr_rx_data_xport* xport_ptr = xport.get();
 
     rx_streamer_impl<chdr_rx_data_xport>::connect_channel(channel, std::move(xport));
+    _rx_xports[channel] = xport_ptr;
 
     // Update MTU property. We need to do this after connect_channel(), because
     // that's where the chdr_rx_data_xport object learns its header size.
@@ -211,6 +215,33 @@ void rfnoc_rx_streamer::connect_channel(
     set_property<size_t>(PROP_KEY_MTU,
         rx_streamer_impl::get_mtu(),
         {res_source_info::INPUT_EDGE, channel});
+}
+
+void rfnoc_rx_streamer::set_remote_destination(const size_t chan, const bool remote)
+{
+    _get_rx_xport(chan).set_remote_destination(remote);
+}
+
+std::optional<bool> rfnoc_rx_streamer::get_remote_destination(const size_t chan) const
+{
+    return _get_rx_xport(chan).get_remote_destination();
+}
+
+bool rfnoc_rx_streamer::has_switchable_destination(const size_t chan) const
+{
+    return _get_rx_xport(chan).has_route_switch();
+}
+
+chdr_rx_data_xport& rfnoc_rx_streamer::_get_rx_xport(const size_t chan) const
+{
+    if (chan >= _rx_xports.size()) {
+        throw uhd::index_error("Invalid RX streamer channel: " + std::to_string(chan));
+    }
+    if (!_rx_xports[chan]) {
+        throw uhd::runtime_error(
+            "RX streamer channel " + std::to_string(chan) + " is not connected");
+    }
+    return *_rx_xports[chan];
 }
 
 void rfnoc_rx_streamer::_register_props(const size_t chan, const std::string& otw_format)
@@ -349,4 +380,52 @@ void rfnoc_rx_streamer::_handle_stream_cmd_action(
     if (_overrun_handling_mode.exchange(false)) {
         RFNOC_LOG_TRACE("Leaving overrun handling mode.");
     }
+}
+
+// BRSC: free functions instead of new virtuals on uhd::rx_streamer, which
+// would break the ABI
+namespace {
+
+rfnoc_rx_streamer& to_rfnoc_rx_streamer(const uhd::rx_streamer::sptr& streamer)
+{
+    auto* rfnoc_streamer = dynamic_cast<rfnoc_rx_streamer*>(streamer.get());
+    if (!rfnoc_streamer) {
+        throw uhd::type_error("RX destination switch requires an RFNoC RX streamer");
+    }
+    return *rfnoc_streamer;
+}
+
+} // namespace
+
+void uhd::rfnoc::brsc::set_rx_destination(
+    const uhd::rx_streamer::sptr& streamer, const rx_destination dest, const size_t chan)
+{
+    if (dest == rx_destination::UNKNOWN) {
+        throw uhd::value_error("Can't route an RX stream to UNKNOWN");
+    }
+    auto& rfnoc_streamer = to_rfnoc_rx_streamer(streamer);
+    const bool remote    = dest == rx_destination::REMOTE;
+    if (chan != ALL_CHANS) {
+        rfnoc_streamer.set_remote_destination(chan, remote);
+        return;
+    }
+    for (size_t i = 0; i < rfnoc_streamer.get_num_channels(); i++) {
+        rfnoc_streamer.set_remote_destination(i, remote);
+    }
+}
+
+uhd::rfnoc::brsc::rx_destination uhd::rfnoc::brsc::get_rx_destination(
+    const uhd::rx_streamer::sptr& streamer, const size_t chan)
+{
+    const auto remote = to_rfnoc_rx_streamer(streamer).get_remote_destination(chan);
+    if (!remote) {
+        return rx_destination::UNKNOWN;
+    }
+    return *remote ? rx_destination::REMOTE : rx_destination::LOCAL;
+}
+
+bool uhd::rfnoc::brsc::has_switchable_rx_destination(
+    const uhd::rx_streamer::sptr& streamer, const size_t chan)
+{
+    return to_rfnoc_rx_streamer(streamer).has_switchable_destination(chan);
 }

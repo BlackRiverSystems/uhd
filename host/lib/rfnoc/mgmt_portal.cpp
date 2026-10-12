@@ -13,6 +13,7 @@
 #include <uhdlib/rfnoc/mgmt_portal.hpp>
 #include <uhdlib/utils/narrow.hpp>
 #include <boost/format.hpp>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <map>
@@ -410,6 +411,70 @@ public:
         UHD_LOG_DEBUG(LOG_ID,
             (boost::format("Programmed a route from EPID=%d to EPID=%s") % src_epid
                 % dst_epid));
+    }
+
+    void set_xbar_route(chdr_ctrl_xport& xport,
+        const topo_node_t& xbar,
+        const sep_id_t& epid,
+        const topo_edge_t::port_t port) override
+    {
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        UHD_ASSERT_THROW(xbar.type == topo_node_t::node_type::XBAR && port >= 0);
+
+        // BRSC: same transaction as one crossbar step of setup_remote_route()
+        const auto my_epid = xport.get_epid();
+        mgmt_payload cfg_xact;
+        cfg_xact.set_header(my_epid, _protover, _chdr_w);
+        _traverse_to_node(cfg_xact, xbar, my_epid, -1, true);
+        mgmt_hop_t xbar_route_hop;
+        xbar_route_hop.add_op(
+            mgmt_op_t(mgmt_op_t::MGMT_OP_CFG_WR_REQ, mgmt_op_t::cfg_payload(epid, port)));
+        xbar_route_hop.add_op(mgmt_op_t(mgmt_op_t::MGMT_OP_RETURN));
+        cfg_xact.add_hop(xbar_route_hop);
+        // The response hop that _send_recv_mgmt_transaction() would add
+        mgmt_hop_t nop_hop;
+        nop_hop.add_op(mgmt_op_t(mgmt_op_t::MGMT_OP_NOP));
+        cfg_xact.add_hop(nop_hop);
+
+        // _send_recv_mgmt_transaction() takes whatever reply comes next, so a
+        // reply that turned up after an earlier timeout would be read as this
+        // one's, and this one's as the next transaction's. Drop queued replies
+        // first, then wait for the reply carrying our SeqNum (the FPGA returns
+        // the request's CHDR header with only length and EPIDs changed).
+        constexpr size_t max_stale_replies = 8;
+        for (size_t i = 0; i < max_stale_replies; i++) {
+            auto stale_buff = xport.get_mgmt_buff(0);
+            if (!stale_buff) {
+                break;
+            }
+            UHD_LOG_WARNING(LOG_ID, "Dropping a stale management reply");
+            xport.release_mgmt_buff(std::move(stale_buff));
+        }
+        const auto seq_num = static_cast<uint16_t>(_send_seqnum);
+        _send_mgmt_transaction(xport, cfg_xact);
+        const auto deadline =
+            std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+        while (true) {
+            const auto remaining_ms =
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    deadline - std::chrono::steady_clock::now())
+                    .count();
+            auto mgmt_buff = xport.get_mgmt_buff(
+                static_cast<int32_t>(std::max<int64_t>(remaining_ms, 0)));
+            if (!mgmt_buff) {
+                throw uhd::io_error(
+                    "Timed out getting recv buff for management transaction");
+            }
+            _recv_pkt->refresh(mgmt_buff->data());
+            const uint16_t reply_seq_num = _recv_pkt->get_chdr_header().get_seq_num();
+            xport.release_mgmt_buff(std::move(mgmt_buff));
+            if (reply_seq_num == seq_num) {
+                return;
+            }
+            UHD_LOG_WARNING(LOG_ID,
+                "Dropping management reply with SeqNum " << reply_seq_num << ", expected "
+                                                         << seq_num);
+        }
     }
 
     void config_local_rx_stream_start(chdr_ctrl_xport& xport,

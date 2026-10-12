@@ -102,7 +102,20 @@ public:
      */
     void connect_channel(const size_t channel, chdr_rx_data_xport::uptr xport) override;
 
+    //! BRSC: Route channel \p chan to its remote destination or back to the
+    // streamer (see uhd/rfnoc/rx_destination.hpp)
+    void set_remote_destination(const size_t chan, const bool remote);
+
+    //! BRSC: True if channel \p chan currently goes to its remote destination,
+    // empty if unknown after a failed switch
+    std::optional<bool> get_remote_destination(const size_t chan) const;
+
+    //! BRSC: True if channel \p chan was created with a remote destination
+    bool has_switchable_destination(const size_t chan) const;
+
 private:
+    chdr_rx_data_xport& _get_rx_xport(const size_t chan) const;
+
     void _register_props(const size_t chan, const std::string& otw_format);
 
     void _handle_rx_event_action(
@@ -140,6 +153,9 @@ private:
     //! True if the last call to issue_stream_cmd() contained a 'stop' command.
     std::atomic<bool> _last_stream_cmd_stop{false};
     size_t _overrun_channel = 0;
+
+    // BRSC: per-channel xports, owned by rx_streamer_impl
+    std::vector<chdr_rx_data_xport*> _rx_xports;
 };
 
 }} // namespace uhd::rfnoc

@@ -124,6 +124,25 @@ public:
     virtual void setup_remote_route(
         chdr_ctrl_xport& xport, const sep_id_t& dst_epid, const sep_id_t& src_epid) = 0;
 
+    //! BRSC: Point the routing entry for \p epid in crossbar \p xbar to \p port
+    //
+    // This is a single management transaction, cheap enough to be used while
+    // streaming (between bursts) to redirect a stream. Unlike the other calls,
+    // it drops stale replies left by an earlier timeout and only accepts the
+    // reply with its own sequence number.
+    //
+    // \throws uhd::io_error if no matching reply arrives within 100 ms
+    //
+    // \param xport The host stream endpoint's CTRL transport
+    // \param xbar The crossbar node to reprogram
+    // \param epid The destination endpoint ID whose entry is changed
+    // \param port The crossbar output port for \p epid
+    //
+    virtual void set_xbar_route(chdr_ctrl_xport& xport,
+        const detail::topo_node_t& xbar,
+        const sep_id_t& epid,
+        const detail::topo_edge_t::port_t port) = 0;
+
     //! Start configuring a flow controlled receive data stream from the endpoint with the
     //  specified ID to this SW mgmt portal.
     //

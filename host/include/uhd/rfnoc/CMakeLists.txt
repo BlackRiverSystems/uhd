@@ -56,6 +56,7 @@ UHD_INSTALL(FILES
     registry.hpp
     res_source_info.hpp
     rfnoc_types.hpp
+    rx_destination.hpp
     traffic_counter.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uhd/rfnoc

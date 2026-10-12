@@ -5,6 +5,7 @@
 //
 
 #include <uhd/exception.hpp>
+#include <uhd/utils/cast.hpp>
 #include <uhd/utils/log.hpp>
 #include <uhdlib/rfnoc/chdr_ctrl_endpoint.hpp>
 #include <uhdlib/rfnoc/link_stream_manager.hpp>
@@ -364,6 +365,11 @@ public:
             UHD_LOG_TRACE(LOG_ID, "Creating remote RX stream...");
             _enable_remote_rx_stream(sanitized_xport_args, src_addr, dst_epid);
         }
+        // BRSC: switchable local/remote destination
+        if (sanitized_xport_args.has_key("alt_dest_addr")) {
+            _setup_switchable_rx_route(
+                *data_xport, sanitized_xport_args, src_addr, dst_epid);
+        }
 
         return data_xport;
     }
@@ -400,6 +406,47 @@ private:
     device_addr_t _sanitize_xport_args(const device_addr_t& xport_args)
     {
         auto args = xport_args;
+
+        // BRSC: switchable local/remote destination, see
+        // uhd/rfnoc/rx_destination.hpp
+        if (args.has_key("alt_dest_addr")) {
+            if (args.has_key("dest_addr")) {
+                throw uhd::value_error(
+                    "`alt_dest_addr' and `dest_addr' are mutually exclusive!");
+            }
+            if (!args.has_key("alt_dest_port")) {
+                throw uhd::value_error("Missing `alt_dest_port' argument!");
+            }
+            // The remote receiver sends no flow control responses, and the
+            // SEP's flow control setting applies to both destinations
+            if (args.has_key("enable_fc")
+                && uhd::cast::from_str<bool>(args["enable_fc"])) {
+                throw uhd::value_error("`alt_dest_addr' requires `enable_fc=0'!");
+            }
+            args["enable_fc"] = "0";
+
+            const auto available_adapters = _mb_iface.get_chdr_xport_adapters();
+            const std::string alt_adapter = args.get("alt_adapter", "");
+            if (!available_adapters.count(alt_adapter)) {
+                throw uhd::value_error(
+                    "Missing or unknown `alt_adapter': " + alt_adapter);
+            }
+            const auto& alt_adapter_info = available_adapters.at(alt_adapter);
+            if (!alt_adapter_info.has_key("rx_routing")) {
+                throw uhd::value_error(
+                    "Transport adapter " + alt_adapter + " can't route RX streams!");
+            }
+            const std::string stream_mode = args.get("alt_stream_mode", "full_packet");
+            if (stream_mode != "raw_payload" && stream_mode != "full_packet") {
+                throw uhd::value_error("Invalid `alt_stream_mode': " + stream_mode);
+            }
+            if (stream_mode == "raw_payload"
+                && !alt_adapter_info.has_key("rx_hdr_removal")) {
+                throw uhd::value_error("Transport adapter " + alt_adapter
+                                       + " can't remove CHDR headers (raw_payload)!");
+            }
+            args["alt_stream_mode"] = stream_mode;
+        }
 
         // Check for UDP-based stream diversion
         if (args.has_key("dest_addr")) {
@@ -538,6 +585,82 @@ private:
         UHD_LOG_DEBUG("RFNOC",
             "Creating diverted RX stream with arguments: " << xport_args.to_string());
         _mb_iface.add_remote_chdr_route(remote_adapter_id, dst_epid, xport_args);
+    }
+
+    /*! BRSC: Make the destination of an RX stream switchable at run time
+     *
+     * The alternate transport adapter gets a permanent route for \p dst_epid
+     * to the remote destination. Switching then only re-points the crossbar
+     * entry for \p dst_epid between the local and the alternate adapter, which
+     * is a single management transaction. Unlike _enable_remote_rx_stream(),
+     * this leaves the route back to \p data_xport in place.
+     */
+    void _setup_switchable_rx_route(chdr_rx_data_xport& data_xport,
+        const device_addr_t& xport_args,
+        const sep_addr_t src_addr,
+        const sep_id_t dst_epid)
+    {
+        using node_type = topo_node_t::node_type;
+        // Only a single crossbar between host and SEP is supported (X3x0):
+        // host SEP -> local TA -> crossbar -> SEP
+        const auto route = _mgmt_portal->get_route(src_addr);
+        const std::vector<route_element_type> hops(route.cbegin(), route.cend());
+        if (hops.size() != 4 || hops[1].node.type != node_type::XPORT
+            || hops[2].node.type != node_type::XBAR
+            || hops[3].node.type != node_type::STRM_EP) {
+            UHD_LOG_THROW(uhd::not_implemented_error,
+                LOG_ID,
+                "Switchable RX destination needs a host -> TA -> crossbar -> SEP "
+                "route, but the route is: "
+                    << to_string(route));
+        }
+        const topo_node_t& local_ta = hops[1].node;
+        const topo_node_t& xbar     = hops[2].node;
+
+        const std::string alt_adapter = xport_args.get("alt_adapter");
+        const sep_inst_t alt_ta_inst  = _mb_iface.get_chdr_xport_adapters()
+                                           .at(alt_adapter)
+                                           .cast<sep_inst_t>("ta_inst", -1);
+        if (alt_ta_inst == local_ta.inst) {
+            throw uhd::value_error("`alt_adapter' " + alt_adapter
+                                   + " is the adapter this stream is connected through!");
+        }
+        // add_unreachable_transport_adapters() put the alternate TA in the graph
+        const topo_node_t alt_ta(xbar.device_id, node_type::XPORT, alt_ta_inst);
+        const auto local_port = _tgraph->get_edge(xbar, local_ta).src_port;
+        const auto alt_port   = _tgraph->get_edge(xbar, alt_ta).src_port;
+        UHD_ASSERT_THROW(local_port >= 0 && alt_port >= 0 && local_port != alt_port);
+
+        device_addr_t route_args;
+        route_args["dest_addr"] = xport_args.get("alt_dest_addr");
+        route_args["dest_port"] = xport_args.get("alt_dest_port");
+        if (xport_args.has_key("alt_dest_mac_addr")) {
+            route_args["dest_mac_addr"] = xport_args.get("alt_dest_mac_addr");
+        }
+        route_args["stream_mode"] = xport_args.get("alt_stream_mode");
+        _mb_iface.add_remote_chdr_route(alt_adapter, dst_epid, route_args);
+
+        // Raw this: the streamer must not outlive the graph that owns this
+        // object (documented in rx_destination.hpp)
+        data_xport.set_route_switch_fn(
+            [this, xbar, dst_epid, local_port, alt_port](const bool remote) {
+                const auto port = remote ? alt_port : local_port;
+                try {
+                    _mgmt_portal->set_xbar_route(*_ctrl_xport, xbar, dst_epid, port);
+                } catch (const uhd::io_error& ex) {
+                    // Rewriting the same entry is harmless
+                    UHD_LOG_WARNING(LOG_ID,
+                        "Retrying crossbar route update for EPID " << dst_epid << ": "
+                                                                   << ex.what());
+                    _mgmt_portal->set_xbar_route(*_ctrl_xport, xbar, dst_epid, port);
+                }
+            });
+        UHD_LOG_DEBUG(LOG_ID,
+            "Switchable RX destination for EPID "
+                << dst_epid << ": crossbar port " << local_port << " (local) or "
+                << alt_port << " (" << alt_adapter << " -> "
+                << route_args.get("dest_addr") << ":" << route_args.get("dest_port")
+                << ")");
     }
 
     /**************************************************************************

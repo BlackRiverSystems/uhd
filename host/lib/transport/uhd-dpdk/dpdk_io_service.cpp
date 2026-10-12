@@ -806,8 +806,20 @@ int dpdk_io_service::_process_udp(
                 auto buff_ptr = (dpdk::dpdk_frame_buff*)buff.release();
                 if (rte_ring_enqueue(recv_io->_recv_queue, buff_ptr)) {
                     rte_pktmbuf_free(buff_ptr->get_pktmbuf());
-                    UHD_LOG_WARNING(
-                        "DPDK::IO_SERVICE", "Dropping packet: No space in recv queue");
+                    // BRSC: without flow control a stalled consumer drops every
+                    // packet here, so log a count once a second instead of a
+                    // line per packet (one counter per I/O thread)
+                    thread_local uint64_t num_dropped = 0;
+                    thread_local std::chrono::steady_clock::time_point next_report;
+                    num_dropped++;
+                    const auto now = std::chrono::steady_clock::now();
+                    if (now >= next_report) {
+                        UHD_LOG_WARNING("DPDK::IO_SERVICE",
+                            "Dropping packet: No space in recv queue ("
+                                << num_dropped << " since the last report)");
+                        num_dropped = 0;
+                        next_report = now + std::chrono::seconds(1);
+                    }
                 } else {
                     recv_io->_num_frames_in_use++;
                     assert(recv_io->_num_frames_in_use <= recv_io->_num_recv_frames);
